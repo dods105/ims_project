@@ -23,7 +23,7 @@ Make sure youve successfully installed and set up flutter. Once you've installed
 
 to run the app in debug mode: open the project on VSCode then open terminal using ```CTRL + SHIFT + ~```. Then connect your phone to your Laptop via USB. Make sure you turned on the ```Developer Mode``` go to ```Developer Options``` turn on ```USB debugging``` and turn on ```Install via USB```
 
-After you've done that, go back in your vscode terminal and type ```flutter run```
+After you've done that, go back in your vscode terminal and type ```flutter pub get``` once this finished, type ```flutter run```
 
 Turn on your laptop wifi, as it will download the project packages needed for running the debug session in your phone. Wait for a while. Once it finished downloading and setting up the downloads, a pop up alert will show on your phone. It will ask you whether you want to install the apk package on your phone. Click ok or confirm.
 
