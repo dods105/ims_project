@@ -15,7 +15,7 @@ GUI and Logic and DB
 ---
 
 
-Make sure youve successfully installed flutter. Once you've installed it, go to Command Line and type ```flutter doctor```. You should see **No Issues Found**.
+Make sure youve successfully installed and set up flutter. Once you've installed it, go to Command Line and type ```flutter doctor```. You should see **No Issues Found**.
 
 ![](assets/instruction/flutter_doctor.png)
 
