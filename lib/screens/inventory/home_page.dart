@@ -15,6 +15,7 @@ class HomePage extends ConsumerWidget {
       appBar: AppBar(title: Text("INVENTORY", style: AppTheme.displayLarge)),
       endDrawer: const AppDrawer(page: '/inventory'),
       body: Center(child: Text('${user?.id}')),
+      backgroundColor: Theme.of(context).colorScheme.background,
     );
   }
 }

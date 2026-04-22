@@ -3,11 +3,12 @@ class Product {
   final int userId;
   final String name;
   final int quantity;
-  final int sellingPrice;
-  final int? originalPrice;
+  final double sellingPrice;
+  final double? originalPrice;
   final String? productType;
   final String? expiryDate;
   final String? barcode;
+  final String? description;
 
   Product({
     this.id,
@@ -19,6 +20,7 @@ class Product {
     this.productType,
     this.expiryDate,
     this.barcode,
+    this.description,
   });
 
   // Product object to db
@@ -33,6 +35,7 @@ class Product {
       'product_type': productType,
       'expiry_date': expiryDate,
       'barcode': barcode,
+      'descrition': description,
     };
   }
 
@@ -48,6 +51,7 @@ class Product {
       productType: map['product_type'],
       expiryDate: map['expiry_date'],
       barcode: map['barcode'],
+      description: map['description'],
     );
   }
 }

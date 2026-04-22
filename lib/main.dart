@@ -7,6 +7,8 @@ import 'screens/login/login_signup_page.dart';
 import 'screens/history/history_section.dart';
 import 'screens/adding/adding_section.dart';
 import 'screens/purchase/purchase_section.dart';
+import 'screens/settings/account.dart';
+import 'screens/settings/display.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +30,8 @@ class MainApp extends StatelessWidget {
         '/history': (BuildContext context) => HistoryPage(),
         '/purchase': (BuildContext context) => PurchasePage(),
         '/logout': (BuildContext context) => const AuthGate(),
+        '/account': (BuildContext context) => Account(),
+        '/display': (BuildContext context) => Display(),
       },
       debugShowCheckedModeBanner: false,
     );

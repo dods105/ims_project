@@ -18,30 +18,83 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     ref.watch(authProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text('SETTINGS', style: AppTheme.displayLarge)),
-      endDrawer: AppDrawer(page: '/settings'),
-      body: Padding(
-        padding: const EdgeInsets.all(15),
+      appBar: AppBar(backgroundColor: Colors.blueAccent),
+      body: Expanded(
         child: ListView(
           //padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
           children: [
-            SettingsItems(label: 'My Account'),
-            const SizedBox(height: 12),
-            SettingsItems(label: 'Display'),
-            const SizedBox(height: 12),
-            InkWell(
-              onTap: () async {
-                await ref.read(authProvider.notifier).logout();
+            Container(
+              color: AppTheme.primaryBlue.withOpacity(0.1),
 
-                if (mounted) {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AuthGate()),
-                    (route) => false,
-                  );
-                }
-              },
-              child: SettingsItems(label: 'Logout'),
+              child: Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: Center(
+                  child: Text('SETTINGS', style: AppTheme.displayLarge),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
+              child: SettingsItems(label: 'MY ACCOUNT', route: '/account'),
+            ),
+
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
+              child: SettingsItems(label: 'DISPLAY', route: '/display'),
+            ),
+
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
+              child: SettingsItems(label: 'LANGUAGE', route: '/language'),
+            ),
+
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
+              child: SettingsItems(label: 'SOUND', route: '/sound'),
+            ),
+
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
+              child: SettingsItems(label: 'MANUAL', route: '/manual'),
+            ),
+            const SizedBox(height: 30),
+            Center(
+              child: SizedBox(
+                width: 100,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                  ),
+                  child: Text(
+                    'LOGOUT',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: () async {
+                    await ref.read(authProvider.notifier).logout();
+                    if (mounted) {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AuthGate()),
+                        (route) => false,
+                      );
+                    }
+                  },
+                ),
+              ),
             ),
           ],
         ),
@@ -52,17 +105,32 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
 class SettingsItems extends StatelessWidget {
   final String label;
+  final String route;
 
-  const SettingsItems({super.key, required this.label});
+  const SettingsItems({super.key, required this.label, required this.route});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
+      onTap: () {
+        Navigator.pushNamed(context, route);
+      },
       child: Container(
-        color: AppTheme.primaryBlue,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          color: AppTheme.primaryBlue.withOpacity(0.1),
+        ),
+
         child: Padding(
-          padding: EdgeInsets.all(10),
-          child: Text(label, style: AppTheme.drawerText),
+          padding: EdgeInsets.all(15),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: Colors.blue,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
         ),
       ),
     );

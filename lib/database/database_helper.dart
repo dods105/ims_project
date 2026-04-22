@@ -4,6 +4,7 @@ import 'package:path/path.dart';
 import 'package:crypto/crypto.dart';
 import '../models/login/user.dart';
 import '../models/products/products.dart';
+import 'package:intl/intl.dart';
 
 class DatabaseHelper {
   // Hash password
@@ -47,17 +48,47 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
         name TEXT NOT NULL UNIQUE,
-        quantity INTEGER NOT NULL,
-        selling_price INTEGER NOT NULL,
-        original_price INTEGER NOT NULL,
+        quantity INTEGER NOT NULL DEFAULT 0,
+        selling_price REAL NOT NULL,
+        original_price REAL,
         product_type TEXT,
         expiry_date TEXT,
         barcode TEXT,
-        user_id INTEGER NOT NULL,
+        description TEXT,
         FOREIGN KEY(user_id) REFERENCES users(id)
       )
     ''');
+
+    await db.execute('''
+    CREATE TABLE transactions (
+      id TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL'
+      customer_name TEXT,
+      customer_address TEXT,
+      total_amount REAL NOT NULL,
+      amount_payed REAL NOT NULL,
+      change_amount REAL NOT NULL,
+      transacted_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN_KEY (user_id) REFERENCES users(id)
+    )
+  ''');
+
+    await db.execute('''
+    CREATE TABLE transaction_items (
+      id INTEGER PRIMARY KEY,
+      transaction_id TEXT NOT NULL,
+      products_id INTEGER NOT NULL,
+      product_name TEXT NOT NULL,
+      barcode TEXT,
+      unit_price REAL NOT NULL,
+      quantity INTEGER NOT NULL,
+      subtotal REAL NOT NULL,
+      FOREIGN_KEY (transaction_id) REFERENCES transactions(id),
+      FOREIGN_KEY (products_id) REFERENCES products(id)
+    )
+  ''');
   }
 
   Future<void> close() async {
@@ -137,5 +168,40 @@ class DatabaseHelper {
       whereArgs: [userId],
     );
     return result.map((e) => Product.fromMap(e)).toList();
+  }
+
+  // ALL ABOUT TRANSACTIONS
+  // num of trans by the hour
+  Future<int> getTransactionCount(Database db, userId, DateTime now) async {
+    final String hour = DateFormat("yyyy-MM-dd'T'HH").format(now);
+
+    final result = await db.rawQuery(
+      '''
+      SELECT COUNT (*) as count
+      FROM transactions
+      WHERE user_id = ?
+      AND transacted_at LIKE ?
+    ''',
+      [userId, '$hour%'],
+    );
+
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  Future<String> generateTransactionId(int userId) async {
+    DateTime now = DateTime.now();
+    final db = await instance.database;
+    final String date = DateFormat('yyyyMMdd').format(now);
+
+    final int hour12 = now.hour % 12 == 0 ? 12 : now.hour % 12;
+
+    final String letter = String.fromCharCode(64 + hour12);
+
+    final String period = now.hour < 12 ? 'AM' : 'PM';
+
+    final int count = await getTransactionCount(db, userId, now);
+    final String sequence = (count + 1).toString().padLeft(3, '0');
+
+    return '$date[2]$date[3]-$hour12-$letter$period-$sequence';
   }
 }

@@ -125,7 +125,13 @@ class _NavItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(left: 25, top: 4, bottom: 4),
       child: InkWell(
-        onTap: () => Navigator.pushReplacementNamed(context, route),
+        onTap: () {
+          if (route == '/settings') {
+            Navigator.pushNamed(context, route);
+          } else {
+            Navigator.pushReplacementNamed(context, route);
+          }
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
           decoration: BoxDecoration(

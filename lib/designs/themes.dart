@@ -3,6 +3,16 @@ import 'package:flutter/material.dart';
 class AppTheme {
   AppTheme._();
 
+  ThemeData lightMode = ThemeData(
+    brightness: Brightness.light,
+    colorScheme: ColorScheme.light(background: Colors.grey.shade300),
+  );
+
+  ThemeData darkMode = ThemeData(
+    brightness: Brightness.dark,
+    colorScheme: ColorScheme.light(background: Colors.grey.shade900),
+  );
+
   static const Color primaryBlue = Color(0xFF1565C0);
 
   static const Color white = Color(0xFFFFFFFF);
