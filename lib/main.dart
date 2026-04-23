@@ -22,7 +22,6 @@ class MainApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Re-builds whenever display settings change → live theme switching
     final display = ref.watch(displaySettingsProvider);
 
     return MaterialApp(
