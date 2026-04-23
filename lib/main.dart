@@ -9,29 +9,43 @@ import 'screens/adding/adding_section.dart';
 import 'screens/purchase/purchase_section.dart';
 import 'screens/settings/account.dart';
 import 'screens/settings/display.dart';
+import 'designs/themes.dart';
+import 'providers/display_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const ProviderScope(child: MainApp()));
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends ConsumerWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Re-builds whenever display settings change → live theme switching
+    final display = ref.watch(displaySettingsProvider);
+
     return MaterialApp(
+      themeMode: display.themeMode,
+      theme: AppTheme.lightTheme(
+        fontFamily: display.fontFamily,
+        fontScale: display.fontScale,
+      ),
+      darkTheme: AppTheme.darkTheme(
+        fontFamily: display.fontFamily,
+        fontScale: display.fontScale,
+      ),
       home: const AuthGate(),
       routes: {
-        '/login': (BuildContext context) => LoginSignupPage(),
-        '/inventory': (BuildContext context) => HomePage(),
-        '/settings': (BuildContext context) => SettingsPage(),
-        '/adding': (BuildContext context) => AddingSectionPage(),
-        '/history': (BuildContext context) => HistoryPage(),
-        '/purchase': (BuildContext context) => PurchasePage(),
-        '/logout': (BuildContext context) => const AuthGate(),
-        '/account': (BuildContext context) => Account(),
-        '/display': (BuildContext context) => Display(),
+        '/login': (context) => LoginSignupPage(),
+        '/inventory': (context) => const HomePage(),
+        '/settings': (context) => const SettingsPage(),
+        '/adding': (context) => AddingSectionPage(),
+        '/history': (context) => HistoryPage(),
+        '/purchase': (context) => PurchasePage(),
+        '/logout': (context) => const AuthGate(),
+        '/account': (context) => Account(),
+        '/display': (context) => const Display(),
       },
       debugShowCheckedModeBanner: false,
     );
