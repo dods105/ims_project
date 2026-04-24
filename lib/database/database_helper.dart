@@ -14,7 +14,7 @@ class DatabaseHelper {
     return digest.toString();
   }
 
-  //aall about data base
+  //all about database
   //------------------------------------------------------
 
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -62,33 +62,33 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
-    CREATE TABLE transactions (
-      id TEXT PRIMARY KEY,
-      user_id INTEGER NOT NULL'
-      customer_name TEXT,
-      customer_address TEXT,
-      total_amount REAL NOT NULL,
-      amount_payed REAL NOT NULL,
-      change_amount REAL NOT NULL,
-      transacted_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN_KEY (user_id) REFERENCES users(id)
-    )
-  ''');
+      CREATE TABLE transactions (
+        id TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        customer_name TEXT,
+        customer_address TEXT,
+        total_amount REAL NOT NULL,
+        amount_payed REAL NOT NULL,
+        change_amount REAL NOT NULL,
+        transacted_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      )
+    ''');
 
     await db.execute('''
-    CREATE TABLE transaction_items (
-      id INTEGER PRIMARY KEY,
-      transaction_id TEXT NOT NULL,
-      products_id INTEGER NOT NULL,
-      product_name TEXT NOT NULL,
-      barcode TEXT,
-      unit_price REAL NOT NULL,
-      quantity INTEGER NOT NULL,
-      subtotal REAL NOT NULL,
-      FOREIGN_KEY (transaction_id) REFERENCES transactions(id),
-      FOREIGN_KEY (products_id) REFERENCES products(id)
-    )
-  ''');
+      CREATE TABLE transaction_items (
+        id INTEGER PRIMARY KEY,
+        transaction_id TEXT NOT NULL,
+        products_id INTEGER NOT NULL,
+        product_name TEXT NOT NULL,
+        barcode TEXT,
+        unit_price REAL NOT NULL,
+        quantity INTEGER NOT NULL,
+        subtotal REAL NOT NULL,
+        FOREIGN KEY (transaction_id) REFERENCES transactions(id),
+        FOREIGN KEY (products_id) REFERENCES products(id)
+      )
+    ''');
   }
 
   Future<void> close() async {

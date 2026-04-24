@@ -22,7 +22,7 @@ class HomePage extends ConsumerWidget {
       backgroundColor: colorScheme.background,
       body: Center(
         child: Text(
-          "Inventory Section!",
+          "Inventory Edited for demo!",
           style: theme.textTheme.headlineMedium?.copyWith(
             color: colorScheme.onBackground,
           ),
