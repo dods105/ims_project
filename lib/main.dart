@@ -11,7 +11,7 @@ import 'screens/settings/account.dart';
 import 'screens/settings/display.dart';
 import 'designs/themes.dart';
 import 'providers/display_provider.dart';
-
+// Walang Binago si Jehron
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const ProviderScope(child: MainApp()));
