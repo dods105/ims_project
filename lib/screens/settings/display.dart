@@ -68,18 +68,13 @@ class Display extends ConsumerWidget {
               onChanged: notifier.setFontFamily,
             ),
           ),
-
-          const SizedBox(height: 40),
-
-          _SectionLabel(text: 'PREVIEW', fontScale: display.fontScale),
-          const SizedBox(height: 10),
-          _SectionCard(child: _PreviewCard(display: display)),
         ],
       ),
     );
   }
 }
 
+//
 class _ModeRow extends StatelessWidget {
   final bool isDark;
   final double fontScale;
@@ -299,56 +294,6 @@ class _FontStyleSection extends StatelessWidget {
       default:
         return null;
     }
-  }
-}
-
-class _PreviewCard extends StatelessWidget {
-  final DisplaySettings display;
-
-  const _PreviewCard({required this.display});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final s = display.fontScale;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'INVENZILLA',
-          style: TextStyle(
-            fontSize: 22 * s,
-            fontWeight: FontWeight.bold,
-            color: cs.primary,
-          ),
-        ),
-        const SizedBox(height: 6),
-
-        Text(
-          'inventory manager',
-          style: TextStyle(fontSize: 13 * s, color: cs.onSurfaceVariant),
-        ),
-
-        const SizedBox(height: 12),
-
-        Text(
-          'Total Sales: ₱1,380.00',
-          style: TextStyle(
-            fontSize: 16 * s,
-            fontWeight: FontWeight.w600,
-            color: cs.onSurfaceVariant,
-          ),
-        ),
-
-        const SizedBox(height: 6),
-
-        Text(
-          'This is how your app text will look.',
-          style: TextStyle(fontSize: 13 * s, color: cs.onSurfaceVariant),
-        ),
-      ],
-    );
   }
 }
 
