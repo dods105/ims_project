@@ -114,6 +114,7 @@ class DatabaseHelper {
     return null;
   }
 
+  //checks if user exists when logging in
   Future<bool> usernameExists(String username) async {
     final db = await instance.database;
     final result = await db.query(
@@ -124,6 +125,7 @@ class DatabaseHelper {
     return result.isNotEmpty;
   }
 
+  //creates a new user
   Future<User> createUser(User user) async {
     final db = await instance.database;
     final hashedPassword = _hashPassword(user.password);
@@ -139,6 +141,11 @@ class DatabaseHelper {
   // all about products
   //--------------------------------------------------------
 
+  //creates a new product
+  //problem: now logic that says if the product name already exists,
+  //it will just create a new product with the same name.
+  //We need to add logic that checks if the product name already exists for the user,
+  //if it does, we update the quantity and selling price instead of creating a new product.
   Future<int> insertProduct(Product product) async {
     final db = await instance.database;
     return await db.insert('products', product.toMap());
@@ -188,6 +195,7 @@ class DatabaseHelper {
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
+  //for generating transaction id
   Future<String> generateTransactionId(int userId) async {
     DateTime now = DateTime.now();
     final db = await instance.database;
