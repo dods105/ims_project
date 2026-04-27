@@ -11,6 +11,8 @@ class HomePage extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 //fakk jehron
+
+//HUIJI
     return Scaffold(
       appBar: AppBar(
         title: Text(
