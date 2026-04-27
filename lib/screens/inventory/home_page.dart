@@ -10,7 +10,7 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-//new comment
+//fakk jehron
     return Scaffold(
       appBar: AppBar(
         title: Text(
