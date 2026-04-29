@@ -85,6 +85,12 @@ class AppDrawer extends StatelessWidget {
                       route: '/purchase',
                       page: page,
                     ),
+                    _NavItem(
+                      icon: Icons.notifications,
+                      label: "NOTIFICATION",
+                      route: '/notification',
+                      page: page,
+                    ),
                   ],
                 ),
               ),

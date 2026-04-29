@@ -9,6 +9,7 @@ class User {
     return {'id': id, 'username': username, 'password': password};
   }
 
+  //add a profile pic
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
       id: map['id'],

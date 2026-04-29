@@ -156,6 +156,10 @@ class DatabaseHelper {
     return await db.delete('products', where: 'id = ?', whereArgs: [id]);
   }
 
+  //to implement:
+  //update product, get product by user id, get product by product id
+  // logic for the multiple expiry date of the same product name is to
+  //just create a new product with the same name but different expiry date?????
   Future<int> updateProduct(Product product) async {
     final db = await instance.database;
     return await db.update(

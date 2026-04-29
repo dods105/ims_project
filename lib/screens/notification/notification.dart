@@ -4,15 +4,15 @@ import '../../designs/drawer.dart';
 import '../../designs/themes.dart';
 import '../../designs/appbar.dart';
 
-class HistoryPage extends ConsumerWidget {
-  const HistoryPage({super.key});
+class NotificationPage extends ConsumerWidget {
+  const NotificationPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      //appBar: AppBarDesign(page: 'History'),
-      endDrawer: const AppDrawer(page: '/history'),
-      body: Center(child: Text('History Page')),
+      appBar: AppBarDesign(page: 'Notification'),
+      endDrawer: const AppDrawer(page: '/notification'),
+      body: Center(child: Text('Notification Page')),
     );
   }
 }

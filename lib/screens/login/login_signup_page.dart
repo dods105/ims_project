@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/providers/auth_provider.dart';
+import 'package:flutter_application_1/providers/profile_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../database/database_helper.dart';
 import '../../models/login/user.dart';
@@ -106,6 +109,7 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
 
   @override
   Widget build(BuildContext context) {
+    final picPath = ref.watch(profileProvider);
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -121,9 +125,9 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
                 child: CircleAvatar(
                   radius: 75,
                   backgroundColor: const Color.fromARGB(192, 229, 229, 242),
-                  backgroundImage: isLoginMode
-                      ? const AssetImage('assets/images/squidward.png')
-                      : const AssetImage('assets/images/happy.png'),
+                  backgroundImage: (!isLoginMode || picPath == null)
+                      ? const AssetImage('assets/images/default-pfp.png')
+                      : FileImage(File(picPath)) as ImageProvider,
                 ),
               ),
               const SizedBox(height: 10),

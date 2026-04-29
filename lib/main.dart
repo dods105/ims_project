@@ -11,6 +11,8 @@ import 'screens/settings/account.dart';
 import 'screens/settings/display.dart';
 import 'designs/themes.dart';
 import 'providers/display_provider.dart';
+import 'screens/notification/notification.dart';
+
 // Walang Binago si Jehron
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +44,7 @@ class MainApp extends ConsumerWidget {
         '/adding': (context) => AddingSectionPage(),
         '/history': (context) => HistoryPage(),
         '/purchase': (context) => PurchasePage(),
+        '/notification': (context) => NotificationPage(),
         '/logout': (context) => const AuthGate(),
         '/account': (context) => Account(),
         '/display': (context) => const Display(),

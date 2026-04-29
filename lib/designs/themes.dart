@@ -267,11 +267,11 @@ class AppTheme {
         errorContainer: Color(0xFF7F1D1D),
         onErrorContainer: Color(0xFFFECACA),
         background: darkBackground,
-        onBackground: darkTextPrimary, // ← WHITE
+        onBackground: darkTextPrimary, // WHITE
         surface: darkCard,
-        onSurface: darkTextPrimary, // ← WHITE
+        onSurface: darkTextPrimary, // WHITE
         surfaceVariant: darkSurface,
-        onSurfaceVariant: darkTextSecondary, // ← light grey-blue
+        onSurfaceVariant: darkTextSecondary, // light grey-blue
         outline: darkBorder,
         outlineVariant: Color(0xFF1E3A5F),
         shadow: Color(0xFF000000),
