@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'themes.dart';
 import '../providers/auth_provider.dart';
+import '../providers/profile_provider.dart';
+import 'dart:io';
 
 class AppBarDesign extends ConsumerWidget implements PreferredSizeWidget {
   final String page;
@@ -13,32 +15,31 @@ class AppBarDesign extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // final profile = ref.watch(profileProvider);
-    final name = ref.watch(authProvider);
+    final profile = ref.watch(profileProvider);
+    final name = ref.watch(authProvider).value?.username ?? '';
 
     return AppBar(
-      leading: Row(
+      title: Row(
         children: [
           const SizedBox(width: 8),
-          //store profile
-          //CircleAvatar(
-          //radius: 16,
-          //       backgroundImage: profile != null
-          //  ? FileImage(File(profile))
-          //: const AssetImage('assets/images/default_profile.png')
-          //    as ImageProvider,
-          //),
+          // store profile
+          CircleAvatar(
+            radius: 16,
+            backgroundImage: profile != null
+                ? FileImage(File(profile))
+                : const AssetImage('assets/images/default-pfp.png')
+                      as ImageProvider,
+          ),
           //store name
           const SizedBox(width: 8),
-          Text(
-            name.value?.username ?? '',
-            style: AppTheme.subtitleLight.copyWith(fontSize: 12),
-          ),
+          Text(name, style: AppTheme.bodyMedium),
+          Spacer(),
+          Text(page.toUpperCase(), style: AppTheme.displayMedium),
+          Spacer(),
         ],
       ),
+
       // current page
-      title: Text(page.toUpperCase(), style: AppTheme.displayMedium),
-      centerTitle: true,
     );
   }
 }

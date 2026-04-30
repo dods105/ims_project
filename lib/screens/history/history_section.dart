@@ -10,7 +10,7 @@ class HistoryPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      //appBar: AppBarDesign(page: 'History'),
+      appBar: AppBarDesign(page: 'History'),
       endDrawer: const AppDrawer(page: '/history'),
       body: Center(child: Text('History Page')),
     );
