@@ -65,6 +65,8 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                       child: Text('EXPIRATION DATE'),
                     ),
 
+                    SizedBox(width: 35.0),
+
                     SizedBox(
                       width: screenWidth / 2 - 50,
                       child: Text('EXPIRATION DATE'),
@@ -101,6 +103,51 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                     ),
                   ],
                 ),
+                SizedBox(height: 15.0),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: screenWidth / 2 - 50,
+                      child: Text('EXPIRATION DATE'),
+                    ),
+
+                    SizedBox(width: 35.0),
+
+                    SizedBox(
+                      width: screenWidth / 2 - 50,
+                      child: Text('EXPIRATION DATE'),
+                    ),
+                  ],
+                ),
+                  Row(
+                  children: [
+                    // First TextField
+                    Flexible(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          labelText: 'P 00.0',
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 10.0), // Second TextField
+                    Flexible(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          labelText: 'P 00.0',
+                          filled: true,
+                          fillColor: Colors.transparent,
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                        ),
+                        readOnly: true,
+                      ),
+                    ),
+                  ]
+                )
               ],
             ),
           ),
