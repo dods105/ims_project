@@ -27,8 +27,8 @@ class Display extends ConsumerWidget {
         title: Text(
           'DISPLAY',
           style: TextStyle(
-            color: cs.onPrimary,
-            fontSize: 22 * display.fontScale,
+            color: cs.surface,
+            fontSize: 22,
             fontWeight: FontWeight.w900,
             letterSpacing: 2,
           ),
@@ -37,6 +37,7 @@ class Display extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         children: [
+          // theme
           _SectionCard(
             child: _ModeRow(
               isDark: isDark,
@@ -48,6 +49,7 @@ class Display extends ConsumerWidget {
 
           const SizedBox(height: 20),
 
+          // font size
           _SectionLabel(text: 'FONT SIZE', fontScale: display.fontScale),
           const SizedBox(height: 10),
           _SectionCard(
@@ -138,6 +140,7 @@ class _FontSizeSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       children: [
         Row(
@@ -147,7 +150,7 @@ class _FontSizeSection extends StatelessWidget {
             return GestureDetector(
               onTap: () => onChanged(s.scale),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 100),
                 width: 88,
                 height: 88,
                 decoration: BoxDecoration(
@@ -190,7 +193,7 @@ class _FontSizeSection extends StatelessWidget {
                 'A',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppTheme.textMuted,
+                  color: cs.primary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -199,7 +202,7 @@ class _FontSizeSection extends StatelessWidget {
                   value: currentScale,
                   min: 0.80,
                   max: 1.25,
-                  divisions: 9,
+                  divisions: 5,
                   activeColor: AppTheme.brandBlue,
                   inactiveColor: AppTheme.borderDefault,
                   onChanged: onChanged,
@@ -209,7 +212,7 @@ class _FontSizeSection extends StatelessWidget {
                 'A',
                 style: TextStyle(
                   fontSize: 20,
-                  color: AppTheme.textMuted,
+                  color: cs.primary,
                   fontWeight: FontWeight.w600,
                 ),
               ),

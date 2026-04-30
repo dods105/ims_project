@@ -18,6 +18,7 @@ class AppTheme {
   static const Color deleteKeyBg = Color(0xFFFEF2F2);
 
   //  Dark Mode Backgrounds
+  static const Color nightBlue = Color.fromARGB(255, 76, 128, 240);
   static const Color darkBackground = Color(0xFF0D1B2E);
   static const Color darkSurface = Color(0xFF162032);
   static const Color darkCard = Color(0xFF1C2B3F);
@@ -283,15 +284,15 @@ class AppTheme {
       scaffoldBackgroundColor: darkBackground,
       textTheme: base,
       appBarTheme: AppBarTheme(
-        backgroundColor: darkSurface,
+        backgroundColor: nightBlue,
         foregroundColor: darkTextPrimary,
         elevation: 0,
         titleTextStyle: base.titleLarge?.copyWith(
-          color: brandBlue,
+          color: darkSurface,
           fontWeight: FontWeight.w800,
           letterSpacing: 1,
         ),
-        iconTheme: const IconThemeData(color: brandBlue),
+        iconTheme: const IconThemeData(color: darkSurface),
       ),
       cardTheme: CardThemeData(
         color: darkCard,

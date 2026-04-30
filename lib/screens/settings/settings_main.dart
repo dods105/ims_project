@@ -17,24 +17,15 @@ class SettingsPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.brandBlue,
-        foregroundColor: AppTheme.white,
         centerTitle: true,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          'SETTINGS',
-          style: TextStyle(
-            color: AppTheme.white,
-            fontSize: 22 * s,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 2,
-          ),
-        ),
+        title: Text('SETTINGS', style: AppTheme.displayMedium),
       ),
+
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         children: [
@@ -150,11 +141,8 @@ class _SettingsItem extends StatelessWidget {
               Container(
                 width: 38,
                 height: 38,
-                decoration: BoxDecoration(
-                  color: AppTheme.blueLight,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: AppTheme.brandBlue, size: 20),
+
+                child: Icon(icon, color: AppTheme.nightBlue, size: 20),
               ),
               const SizedBox(width: 14),
               // Label
@@ -164,7 +152,7 @@ class _SettingsItem extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14 * fontScale,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.brandBlue,
+                    color: AppTheme.nightBlue,
                     letterSpacing: 0.5,
                   ),
                 ),
