@@ -27,7 +27,7 @@ class Account extends ConsumerWidget {
                   radius: 70,
                   backgroundImage: picPath != null
                       ? FileImage(File(picPath))
-                      : const AssetImage('assets/images/default_profile.png')
+                      : const AssetImage('assets/images/default-pfp.png')
                             as ImageProvider,
                 ),
                 Positioned(
