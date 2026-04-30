@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../designs/drawer.dart';
 import '../../designs/themes.dart';
+import '../../designs/appbar.dart';
 
 class AddingSectionPage extends ConsumerStatefulWidget {
   const AddingSectionPage({super.key});
@@ -15,7 +16,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
-      appBar: AppBar(title: Text('ADD PRODUCTS', style: AppTheme.displayLarge)),
+      appBar: AppBarDesign(page: 'ADD PRODUCT'),
       endDrawer: const AppDrawer(page: '/adding'),
       body: SingleChildScrollView(
         child: Center(
