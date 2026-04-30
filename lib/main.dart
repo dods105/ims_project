@@ -36,7 +36,7 @@ class MainApp extends ConsumerWidget {
         fontFamily: display.fontFamily,
         fontScale: display.fontScale,
       ),
-      //home: const AuthGate(), // dont delete.
+      home: const AuthGate(), // dont delete.
       // home: const HomePage(), //uncomment for inventrory page
       //home: const AddingSectionPage(), //uncomment for adding page
       // home: PurchasePage(), //uncomment for purchase page
