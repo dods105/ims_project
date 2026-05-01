@@ -43,7 +43,7 @@ class HomePage extends ConsumerWidget {
           ),
 
           // Column Headers
-          const Padding(
+          Padding(
             padding: EdgeInsets.fromLTRB(30, 20, 30, 10),
             child: Row(
               children: [
@@ -51,33 +51,24 @@ class HomePage extends ConsumerWidget {
                   flex: 3,
                   child: Text(
                     'NAME',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF003366),
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
                 Expanded(
                   flex: 3,
                   child: Text(
                     'STOCKS',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF003366),
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
                 Expanded(
                   flex: 3,
                   child: Text(
                     'PRICE',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF003366),
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-                Icon(Icons.filter_list, size: 20, color: Color(0xFF003366)),
+                Icon(Icons.filter_list, size: 20),
               ],
             ),
           ),
@@ -103,16 +94,10 @@ class HomePage extends ConsumerWidget {
                     ),
                     child: const Row(
                       children: [
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            '----------------',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        ),
+                        Expanded(flex: 3, child: Text('----------------')),
                         Expanded(flex: 2, child: Text('')),
                         Expanded(flex: 2, child: Text('')),
-                        Icon(Icons.more_vert, size: 18, color: Colors.grey),
+                        Icon(Icons.more_vert, size: 18),
                       ],
                     ),
                   ),
