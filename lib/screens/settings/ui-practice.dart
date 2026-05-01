@@ -27,13 +27,10 @@ class Practice extends ConsumerWidget {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                color: cs.surfaceVariant.withOpacity(
-                  0.3,
-                ), 
+                color: cs.surfaceVariant.withOpacity(0.3),
               ),
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -44,7 +41,7 @@ class Practice extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Mode",
+                        "Theme Mode",
                         style: TextStyle(
                           fontSize: 14 * fontScale,
                           fontWeight: FontWeight.w600,
@@ -73,7 +70,6 @@ class Practice extends ConsumerWidget {
             ),
             const SizedBox(height: 30),
 
-          
             _FontSizeCard(
               currentScale: fontScale,
               onSelect: (newScale) => notifier.setFontScale(newScale),
@@ -125,7 +121,7 @@ class _FontSizeCard extends StatelessWidget {
                   height: 85,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    
+
                     color: isSelected ? cs.primaryContainer : cs.surfaceVariant,
                     border: isSelected
                         ? Border.all(color: cs.primary, width: 2)
