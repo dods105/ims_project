@@ -15,7 +15,6 @@ class DatabaseHelper {
   }
 
   //all about database
-  //------------------------------------------------------
 
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
@@ -97,7 +96,6 @@ class DatabaseHelper {
   }
 
   // all about user
-  //--------------------------------------------------------
 
   Future<User?> checkUser(String username, String password) async {
     final db = await instance.database;
@@ -138,8 +136,30 @@ class DatabaseHelper {
     return User(id: id, username: user.username, password: hashedPassword);
   }
 
+  Future<User> editUsername(int id, String newUsername) async {
+    final db = await instance.database;
+    await db.update(
+      'users',
+      {'username': newUsername},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    return User(id: id, username: newUsername, password: '');
+  }
+
+  Future<User> editPassword(int id, String newPassword) async {
+    final db = await instance.database;
+    final hashedPassword = _hashPassword(newPassword);
+    await db.update(
+      'users',
+      {'password': hashedPassword},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    return User(id: id, username: '', password: hashedPassword);
+  }
+
   // all about products
-  //--------------------------------------------------------
 
   //creates a new product
   //problem: now logic that says if the product name already exists,
@@ -199,7 +219,7 @@ class DatabaseHelper {
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
-  //for generating transaction id
+  //for generating transaction id (use this gian)
   Future<String> generateTransactionId(int userId) async {
     DateTime now = DateTime.now();
     final db = await instance.database;

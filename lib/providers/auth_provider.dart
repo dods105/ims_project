@@ -26,6 +26,40 @@ class AuthNotifier extends AsyncNotifier<User?> {
     await SessionManager.clearSession();
     state = const AsyncData(null);
   }
+
+  Future<void> updateUsername(String newName) async {
+    final currentUser = state.value;
+    if (currentUser != null) {
+      final updatedUser = User(
+        id: currentUser.id,
+        username: newName,
+        password: '',
+      );
+      state = AsyncData(updatedUser);
+
+      await SessionManager.saveSession(currentUser.id!, newName);
+    }
+  }
+
+  Future<void> updatePassword(String newHashedPassword) async {
+    final currentUser = state.value;
+    if (currentUser != null) {
+      state = AsyncData(
+        User(id: currentUser.id, username: currentUser.username, password: ''),
+      );
+    }
+  }
+
+  Future<void> updateStateName(String newName) async {
+    final currentUser = state.value;
+    if (currentUser != null) {
+      // update with new name but keep id
+      state = AsyncData(
+        User(id: currentUser.id, username: newName, password: ''),
+      );
+      await SessionManager.saveSession(currentUser.id!, newName);
+    }
+  }
 }
 
 final authProvider = AsyncNotifierProvider<AuthNotifier, User?>(
