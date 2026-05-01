@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
+import '../../database/database_helper.dart';
 
 class Account extends ConsumerWidget {
   const Account({super.key});
@@ -21,7 +22,6 @@ class Account extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Profile picture with edit button
             Stack(
               children: [
                 CircleAvatar(
@@ -56,20 +56,29 @@ class Account extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
 
-            // Username with edit icon
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  username.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+            GestureDetector(
+              onTap: () {
+                AccountActions.showEditNameDialog(
+                  context,
+                  ref,
+                  username,
+                  authAsync.value?.id ?? 0,
+                );
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    username.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 4),
-                Icon(Icons.edit, size: 18, color: cs.primary),
-              ],
+                  const SizedBox(width: 4),
+                  Icon(Icons.edit, size: 18, color: cs.primary),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
 
@@ -79,7 +88,10 @@ class Account extends ConsumerWidget {
               child: TextButton(
                 style: TextButton.styleFrom(backgroundColor: cs.secondary),
                 onPressed: () {
-                  // TODO: change password dialog
+                  AccountActions.showChangePasswordDialog(
+                    context,
+                    authAsync.value?.id ?? 0,
+                  );
                 },
                 child: Text(
                   "CHANGE PASSWORD",
@@ -87,11 +99,131 @@ class Account extends ConsumerWidget {
                 ),
               ),
             ),
+
             const SizedBox(height: 12),
 
             // Logout
           ],
         ),
+      ),
+    );
+  }
+}
+
+class AccountActions {
+  static void showEditNameDialog(
+    BuildContext context,
+    WidgetRef ref,
+    String currentName,
+    int userId,
+  ) {
+    final controller = TextEditingController(text: currentName);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("CHANGE USERNAME"),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: "New Username",
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("CANCEL"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              final newName = controller.text.trim();
+              if (newName.isNotEmpty && newName != currentName) {
+                // Update db
+                await DatabaseHelper.instance.editUsername(userId, newName);
+                // Update ui
+                ref.read(authProvider.notifier).updateStateName(newName);
+                if (context.mounted) Navigator.pop(context);
+              }
+            },
+            child: const Text("SAVE"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static void showChangePasswordDialog(BuildContext context, int userId) {
+    final controller = TextEditingController();
+    bool obscurePassword = true;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text("CHANGE PASSWORD"),
+            content: TextField(
+              controller: controller,
+              obscureText: obscurePassword,
+              decoration: InputDecoration(
+                labelText: "New Password",
+                hintText: "At least 6 characters",
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      obscurePassword = !obscurePassword;
+                    });
+                  },
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("CANCEL"),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () async {
+                  final newPass = controller.text;
+
+                  if (newPass.length >= 6) {
+                    // Update database pass
+                    await DatabaseHelper.instance.editPassword(userId, newPass);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Password updated successfully!"),
+                        ),
+                      );
+                    }
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Password must be at least 6 characters"),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+                child: const Text("UPDATE"),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
