@@ -8,7 +8,7 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      width: MediaQuery.sizeOf(context).width * 0.60,
+      width: MediaQuery.sizeOf(context).width * 0.65,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(60),
@@ -83,6 +83,12 @@ class AppDrawer extends StatelessWidget {
                       icon: Icons.shopping_cart,
                       label: 'PURCHASE',
                       route: '/purchase',
+                      page: page,
+                    ),
+                    _NavItem(
+                      icon: Icons.notifications,
+                      label: "NOTIFICATION",
+                      route: '/notification',
                       page: page,
                     ),
                   ],

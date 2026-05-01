@@ -14,7 +14,7 @@ class DatabaseHelper {
     return digest.toString();
   }
 
-  //aall about data base
+  //all about database
   //------------------------------------------------------
 
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -62,33 +62,33 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
-    CREATE TABLE transactions (
-      id TEXT PRIMARY KEY,
-      user_id INTEGER NOT NULL'
-      customer_name TEXT,
-      customer_address TEXT,
-      total_amount REAL NOT NULL,
-      amount_payed REAL NOT NULL,
-      change_amount REAL NOT NULL,
-      transacted_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN_KEY (user_id) REFERENCES users(id)
-    )
-  ''');
+      CREATE TABLE transactions (
+        id TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        customer_name TEXT,
+        customer_address TEXT,
+        total_amount REAL NOT NULL,
+        amount_payed REAL NOT NULL,
+        change_amount REAL NOT NULL,
+        transacted_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      )
+    ''');
 
     await db.execute('''
-    CREATE TABLE transaction_items (
-      id INTEGER PRIMARY KEY,
-      transaction_id TEXT NOT NULL,
-      products_id INTEGER NOT NULL,
-      product_name TEXT NOT NULL,
-      barcode TEXT,
-      unit_price REAL NOT NULL,
-      quantity INTEGER NOT NULL,
-      subtotal REAL NOT NULL,
-      FOREIGN_KEY (transaction_id) REFERENCES transactions(id),
-      FOREIGN_KEY (products_id) REFERENCES products(id)
-    )
-  ''');
+      CREATE TABLE transaction_items (
+        id INTEGER PRIMARY KEY,
+        transaction_id TEXT NOT NULL,
+        products_id INTEGER NOT NULL,
+        product_name TEXT NOT NULL,
+        barcode TEXT,
+        unit_price REAL NOT NULL,
+        quantity INTEGER NOT NULL,
+        subtotal REAL NOT NULL,
+        FOREIGN KEY (transaction_id) REFERENCES transactions(id),
+        FOREIGN KEY (products_id) REFERENCES products(id)
+      )
+    ''');
   }
 
   Future<void> close() async {
@@ -114,6 +114,7 @@ class DatabaseHelper {
     return null;
   }
 
+  //checks if user exists when logging in
   Future<bool> usernameExists(String username) async {
     final db = await instance.database;
     final result = await db.query(
@@ -124,6 +125,7 @@ class DatabaseHelper {
     return result.isNotEmpty;
   }
 
+  //creates a new user
   Future<User> createUser(User user) async {
     final db = await instance.database;
     final hashedPassword = _hashPassword(user.password);
@@ -139,6 +141,11 @@ class DatabaseHelper {
   // all about products
   //--------------------------------------------------------
 
+  //creates a new product
+  //problem: now logic that says if the product name already exists,
+  //it will just create a new product with the same name.
+  //We need to add logic that checks if the product name already exists for the user,
+  //if it does, we update the quantity and selling price instead of creating a new product.
   Future<int> insertProduct(Product product) async {
     final db = await instance.database;
     return await db.insert('products', product.toMap());
@@ -149,6 +156,10 @@ class DatabaseHelper {
     return await db.delete('products', where: 'id = ?', whereArgs: [id]);
   }
 
+  //to implement:
+  //update product, get product by user id, get product by product id
+  // logic for the multiple expiry date of the same product name is to
+  //just create a new product with the same name but different expiry date?????
   Future<int> updateProduct(Product product) async {
     final db = await instance.database;
     return await db.update(
@@ -188,6 +199,7 @@ class DatabaseHelper {
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
+  //for generating transaction id
   Future<String> generateTransactionId(int userId) async {
     DateTime now = DateTime.now();
     final db = await instance.database;

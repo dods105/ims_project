@@ -18,6 +18,7 @@ class AppTheme {
   static const Color deleteKeyBg = Color(0xFFFEF2F2);
 
   //  Dark Mode Backgrounds
+  static const Color nightBlue = Color.fromARGB(255, 76, 128, 240);
   static const Color darkBackground = Color(0xFF0D1B2E);
   static const Color darkSurface = Color(0xFF162032);
   static const Color darkCard = Color(0xFF1C2B3F);
@@ -182,7 +183,7 @@ class AppTheme {
         onPrimaryContainer: Color(0xFF1D4ED8),
         secondary: brandBlueHover,
         onSecondary: white,
-        secondaryContainer: Color(0xFFEFF6FF),
+        secondaryContainer: brandBlue,
         onSecondaryContainer: brandBlue,
         tertiary: Color(0xFF42A5F5),
         onTertiary: white,
@@ -256,7 +257,7 @@ class AppTheme {
         onPrimaryContainer: Color(0xFFDBEAFE),
         secondary: Color(0xFF42A5F5),
         onSecondary: white,
-        secondaryContainer: Color(0xFF1565C0),
+        secondaryContainer: nightBlue,
         onSecondaryContainer: Color(0xFFBFDBFE),
         tertiary: Color(0xFF93C5FD),
         onTertiary: Color(0xFF0D1B2E),
@@ -267,11 +268,11 @@ class AppTheme {
         errorContainer: Color(0xFF7F1D1D),
         onErrorContainer: Color(0xFFFECACA),
         background: darkBackground,
-        onBackground: darkTextPrimary, // ← WHITE
+        onBackground: darkTextPrimary, // WHITE
         surface: darkCard,
-        onSurface: darkTextPrimary, // ← WHITE
+        onSurface: darkTextPrimary, // WHITE
         surfaceVariant: darkSurface,
-        onSurfaceVariant: darkTextSecondary, // ← light grey-blue
+        onSurfaceVariant: darkTextSecondary, // light grey-blue
         outline: darkBorder,
         outlineVariant: Color(0xFF1E3A5F),
         shadow: Color(0xFF000000),
@@ -283,15 +284,15 @@ class AppTheme {
       scaffoldBackgroundColor: darkBackground,
       textTheme: base,
       appBarTheme: AppBarTheme(
-        backgroundColor: darkSurface,
+        backgroundColor: nightBlue,
         foregroundColor: darkTextPrimary,
         elevation: 0,
         titleTextStyle: base.titleLarge?.copyWith(
-          color: brandBlue,
+          color: darkSurface,
           fontWeight: FontWeight.w800,
           letterSpacing: 1,
         ),
-        iconTheme: const IconThemeData(color: brandBlue),
+        iconTheme: const IconThemeData(color: darkSurface),
       ),
       cardTheme: CardThemeData(
         color: darkCard,

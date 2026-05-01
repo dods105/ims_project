@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/login/user.dart';
 import '../services/session_manager.dart';
+import 'profile_provider.dart';
 
 class AuthNotifier extends AsyncNotifier<User?> {
   @override
@@ -9,6 +10,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
     final username = await SessionManager.getSavedUsername();
 
     if (userId != null && username != null) {
+      await ref.read(profileProvider.notifier).load(userId);
       return User(id: userId, username: username, password: '');
     }
     return null;
@@ -16,6 +18,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
   Future<void> login(User user) async {
     await SessionManager.saveSession(user.id!, user.username);
+    await ref.read(profileProvider.notifier).load(user.id!);
     state = AsyncData(user);
   }
 

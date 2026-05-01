@@ -6,7 +6,7 @@ class Product {
   final double sellingPrice;
   final double? originalPrice;
   final String? productType;
-  final String? expiryDate;
+  final String? expiryDate; // what if same prod has dif exp date?
   final String? barcode;
   final String? description;
 
