@@ -43,7 +43,7 @@ class HomePage extends ConsumerWidget {
           ),
 
           // Column Headers
-          const Padding(
+          Padding(
             padding: EdgeInsets.fromLTRB(30, 20, 30, 10),
             child: Row(
               children: [
@@ -68,7 +68,7 @@ class HomePage extends ConsumerWidget {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-                Icon(Icons.filter_list, size: 20, color: Color(0xFF003366)),
+                Icon(Icons.filter_list, size: 20),
               ],
             ),
           ),
