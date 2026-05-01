@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../designs/themes.dart';
 import '../../providers/display_provider.dart';
 
+//comment
 const _sizes = [
   (label: 'Small', scale: 0.85, fontSize: 18.0),
   (label: 'Medium', scale: 1.0, fontSize: 26.0),
@@ -14,7 +15,6 @@ class Practice extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Assuming your provider returns a state with fontScale and themeMode
     final display = ref.watch(displaySettingsProvider);
     final isDark = display.themeMode == ThemeMode.dark;
     final cs = Theme.of(context).colorScheme;
