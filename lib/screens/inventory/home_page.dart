@@ -16,7 +16,7 @@ class HomePage extends ConsumerWidget {
       //Using your existing AppBar Component
       appBar: AppBarDesign(page: "STORAGE"),
       //Using your existing Drawer Component
-      endDrawer: const AppDrawer(page: '/storage'),
+      endDrawer: const AppDrawer(page: '/inventory'),
 
       body: Column(
         children: [
