@@ -18,12 +18,12 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
   Future<void> login(User user) async {
     await SessionManager.saveSession(user.id!, user.username);
+    await ref.read(profileProvider.notifier).load(user.id!);
     state = AsyncData(user);
   }
 
   Future<void> logout() async {
     await SessionManager.clearSession();
-    ref.read(profileProvider.notifier).clear();
     state = const AsyncData(null);
   }
 }

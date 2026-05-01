@@ -11,6 +11,7 @@ class Account extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authAsync = ref.watch(authProvider);
     final picPath = ref.watch(profileProvider);
+    final cs = Theme.of(context).colorScheme;
 
     final username = authAsync.value?.username ?? '';
 
@@ -67,7 +68,7 @@ class Account extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                const Icon(Icons.edit, size: 18, color: Colors.grey),
+                Icon(Icons.edit, size: 18, color: cs.primary),
               ],
             ),
             const SizedBox(height: 24),
@@ -75,27 +76,20 @@ class Account extends ConsumerWidget {
             // Change password button
             SizedBox(
               width: 220,
-              child: OutlinedButton(
+              child: TextButton(
+                style: TextButton.styleFrom(backgroundColor: cs.secondary),
                 onPressed: () {
                   // TODO: change password dialog
                 },
-                child: const Text("CHANGE PASSWORD"),
+                child: Text(
+                  "CHANGE PASSWORD",
+                  style: TextStyle(color: cs.surface),
+                ),
               ),
             ),
             const SizedBox(height: 12),
 
             // Logout
-            SizedBox(
-              width: 220,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                onPressed: () => ref.read(authProvider.notifier).logout(),
-                child: const Text(
-                  "LOGOUT",
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ),
           ],
         ),
       ),

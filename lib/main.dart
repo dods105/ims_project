@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/screens/inventory/home_page.dart';
 import 'package:flutter_application_1/screens/settings/settings_main.dart';
+import 'package:flutter_application_1/screens/settings/ui-practice.dart';
 import 'package:flutter_application_1/services/auth_gate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'screens/login/login_signup_page.dart';
@@ -50,7 +51,7 @@ class MainApp extends ConsumerWidget {
         '/notification': (context) => NotificationPage(),
         '/logout': (context) => const AuthGate(),
         '/account': (context) => Account(),
-        '/display': (context) => const Display(),
+        '/display': (context) => const Practice(),
       },
       debugShowCheckedModeBanner: false,
     );
