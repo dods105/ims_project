@@ -10,7 +10,6 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final cs = Theme.of(context).colorScheme;
     //fakk jehron
     return Scaffold(
