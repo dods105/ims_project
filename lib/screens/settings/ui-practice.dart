@@ -27,13 +27,13 @@ class Practice extends ConsumerWidget {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            // Theme Toggle Card
+            
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 color: cs.surfaceVariant.withOpacity(
                   0.3,
-                ), // Changed for better visibility
+                ), 
               ),
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -73,7 +73,7 @@ class Practice extends ConsumerWidget {
             ),
             const SizedBox(height: 30),
 
-            // Font Size Selection Card
+          
             _FontSizeCard(
               currentScale: fontScale,
               onSelect: (newScale) => notifier.setFontScale(newScale),
@@ -125,7 +125,7 @@ class _FontSizeCard extends StatelessWidget {
                   height: 85,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    // Highlight the container if selected
+                    
                     color: isSelected ? cs.primaryContainer : cs.surfaceVariant,
                     border: isSelected
                         ? Border.all(color: cs.primary, width: 2)
