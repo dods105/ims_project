@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../designs/drawer.dart';
 import '../../designs/themes.dart';
 import '../../designs/appbar.dart';
+import 'package:image_picker/image_picker.dart'; // Add new logic function
 
 class AddingSectionPage extends ConsumerStatefulWidget {
   const AddingSectionPage({super.key});
@@ -25,6 +26,33 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start, // Horizontal center
               children: [
+                SizedBox(height: 10),
+Text('PRODUCT IMAGE'),
+SizedBox(height: 10),
+
+Container(
+  height: 150,
+  width: double.infinity,
+  decoration: BoxDecoration(
+    border: Border.all(color: Colors.grey),
+    borderRadius: BorderRadius.circular(8),
+  ),
+  child: Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
+        SizedBox(height: 8),
+        Text(
+          'Tap to upload image',
+          style: TextStyle(color: Colors.grey),
+        ),
+      ],
+    ),
+  ),
+),
+
+SizedBox(height: 20),
                 Text('PRODUCT NAME'),
                 SizedBox(height: 5.0),
                 TextField(
