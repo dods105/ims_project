@@ -51,7 +51,7 @@ class MainApp extends ConsumerWidget {
         '/notification': (context) => NotificationPage(),
         '/logout': (context) => const AuthGate(),
         '/account': (context) => Account(),
-        '/display': (context) => const Practice(),
+        '/display': (context) => const Display(),
       },
       debugShowCheckedModeBanner: false,
     );

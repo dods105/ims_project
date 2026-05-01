@@ -5,8 +5,8 @@ import '../../providers/display_provider.dart';
 
 //comment
 const _sizes = [
-  (label: 'Small', scale: 0.85, fontSize: 18.0),
-  (label: 'Medium', scale: 1.0, fontSize: 26.0),
+  (label: 'Small', scale: 0.85, fontSize: 15.0),
+  (label: 'Medium', scale: 1.0, fontSize: 20.0),
   (label: 'Large', scale: 1.2, fontSize: 34.0),
 ];
 
@@ -30,7 +30,7 @@ class Practice extends ConsumerWidget {
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                color: cs.surfaceVariant.withOpacity(0.3),
+                color: cs.outline,
               ),
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -94,7 +94,7 @@ class _FontSizeCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: cs.surfaceVariant.withOpacity(0.3),
+        color: cs.outline,
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -107,25 +107,22 @@ class _FontSizeCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: _sizes.map((s) {
-              final isSelected = currentScale == s.scale;
+              final isSelected = (currentScale - s.scale).abs() < 0.01;
 
               return InkWell(
                 onTap: () => onSelect(s.scale),
                 borderRadius: BorderRadius.circular(20),
-                child: Container(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
                   width: 85,
                   height: 85,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-
-                    color: isSelected ? cs.primaryContainer : cs.surfaceVariant,
-                    border: isSelected
-                        ? Border.all(color: cs.primary, width: 2)
-                        : null,
+                    color: isSelected ? cs.primary : cs.surface,
                   ),
                   alignment: Alignment.center,
                   child: Text(
@@ -133,14 +130,24 @@ class _FontSizeCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: s.fontSize,
                       fontWeight: FontWeight.w600,
-                      color: isSelected
-                          ? cs.onPrimaryContainer
-                          : cs.onSurfaceVariant,
+                      color: isSelected ? cs.onPrimary : cs.onSurface,
                     ),
                   ),
                 ),
               );
             }).toList(),
+          ),
+          const SizedBox(height: 20),
+          Slider(
+            value: currentScale,
+
+            min: 0.85,
+            max: 1.2,
+
+            divisions: 2,
+            onChanged: (value) {
+              onSelect(value);
+            },
           ),
         ],
       ),
