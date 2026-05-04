@@ -47,7 +47,7 @@ class MainApp extends ConsumerWidget {
         '/settings': (context) => const SettingsPage(),
         '/adding': (context) => AddingSectionPage(),
         '/history': (context) => HistoryPage(),
-        '/purchase': (context) => PurchasePage(),
+        '/purchase': (context) => purchase_section(),
         '/notification': (context) => NotificationPage(),
         '/logout': (context) => const AuthGate(),
         '/account': (context) => Account(),
