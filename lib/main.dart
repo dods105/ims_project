@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/inventory/home_page.dart';
 import 'package:flutter_application_1/screens/settings/settings_main.dart';
-import 'package:flutter_application_1/screens/settings/ui-practice.dart';
 import 'package:flutter_application_1/services/auth_gate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'screens/login/login_signup_page.dart';
@@ -13,6 +11,7 @@ import 'screens/settings/display.dart';
 import 'designs/themes.dart';
 import 'providers/display_provider.dart';
 import 'screens/notification/notification.dart';
+import 'screens/inventory/home_page.dart';
 
 // Walang Binago si Jehron
 void main() async {
@@ -37,13 +36,10 @@ class MainApp extends ConsumerWidget {
         fontFamily: display.fontFamily,
         fontScale: display.fontScale,
       ),
-      home: const AuthGate(), // dont delete.
-      // home: const HomePage(), //uncomment for inventrory page
-      //home: const AddingSectionPage(), //uncomment for adding page
-      // home: PurchasePage(), //uncomment for purchase page
+      home: const AuthGate(),
       routes: {
         '/login': (context) => LoginSignupPage(),
-        '/inventory': (context) => const HomePage(),
+        '/inventory': (context) => HomePage(),
         '/settings': (context) => const SettingsPage(),
         '/adding': (context) => AddingSectionPage(),
         '/history': (context) => HistoryPage(),
