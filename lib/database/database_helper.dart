@@ -215,7 +215,7 @@ class DatabaseHelper {
       // same expiry date
       existing = await db.query(
         'products',
-        where: 'user_id ? AND name = ? AND expiry_date = ?',
+        where: 'user_id = ? AND name = ? AND expiry_date = ?',
         whereArgs: [product.userId, product.name, product.expiryDate],
       );
     }
@@ -249,8 +249,8 @@ class DatabaseHelper {
     if (product.expiryDate == null || product.expiryDate == "") {
       existing = await db.query(
         'products',
-        where: 'user_id = ? AND name = ? AND expiry_date = ?',
-        whereArgs: [product.userId, product.name, product.expiryDate],
+        where: 'user_id = ? AND name = ? AND (expiry_date IS NULL OR expiry_date = "")',
+        whereArgs: [product.userId, product.name],
       );
     } else {
       existing = await db.query(
@@ -338,9 +338,9 @@ class DatabaseHelper {
       final userId = expiredProduct.first['user_id'];
       // delete all notif about the product
       await db.delete(
-        'notification',
-        where: 'user_id = ? AND expiry_date = ? AND name = ?',
-        whereArgs: [userId, name, expiryDate],
+        'notifications',
+        where: 'user_id = ? AND expiry_date = ? AND product_name = ?',
+        whereArgs: [userId, expiryDate, name],
       );
     }
     // del the expired prod
@@ -351,14 +351,14 @@ class DatabaseHelper {
 
   Future<int> insertNotification(AppNotification notif) async {
     final db = await instance.database;
-    return await db.insert('notification', notif.toMap());
+    return await db.insert('notifications', notif.toMap());
   }
 
   Future<List<AppNotification>> getNotifications(int userId) async {
     final db = await instance.database;
     final notifs = await db.query(
       'notifications',
-      where: 'user_id',
+      where: 'user_id = ?',
       whereArgs: [userId],
     );
 
