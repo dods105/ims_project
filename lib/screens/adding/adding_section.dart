@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/products/products.dart';
+import 'package:flutter_application_1/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../designs/drawer.dart';
-import '../../designs/themes.dart';
 import '../../designs/appbar.dart';
 import 'package:image_picker/image_picker.dart'; // Add new logic function
 import 'dart:io';
 import 'barcode_scanner_page.dart';
+import 'package:flutter/services.dart';
 
 
 class AddingSectionPage extends ConsumerStatefulWidget {
@@ -23,6 +25,16 @@ File? _selectedImage;
 final TextEditingController barcodeController = TextEditingController();
 
 final TextEditingController _dateContoller = TextEditingController();
+
+final TextEditingController nameController = TextEditingController();
+
+final TextEditingController descriptionController = TextEditingController();
+
+final TextEditingController numberofitemsController = TextEditingController();
+
+final TextEditingController originalprice = TextEditingController();
+
+final TextEditingController srpController = TextEditingController();
 
 Future<void> _pickImage(ImageSource source) async {
   // Use ImageSource.gallery or ImageSource.camera
@@ -106,7 +118,60 @@ Future<void> _selectDate() async{
     }
 }
 
+Future<void> savedproduct(int userId) async {
+  if (nameController.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Enter Product Name"),
+        backgroundColor: Colors.red,
+        duration: Duration(milliseconds: 1500),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+  if (numberofitemsController.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Enter No. of Items"),
+        backgroundColor: Colors.red,
+        duration: Duration(milliseconds: 1500),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+  if (originalprice.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Enter Original Price"),
+        backgroundColor: Colors.red,
+        duration: Duration(milliseconds: 1500),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  if (srpController.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Enter SRP"),
+        backgroundColor: Colors.red,
+        duration: Duration(milliseconds: 1500),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    return;
+  }
+
+ /* final product = Product(
+    userId: userId, 
+    name: nameController.text.trim(),
+    quantity: numberofitemsController.textint.(parse),
+    sellingPrice:
+    )*/
+}
+
   Widget build(BuildContext context) {
+    final userId = ref.read(authProvider).value?.id;
     double screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBarDesign(page: 'ADD PRODUCT'),
@@ -180,9 +245,10 @@ Future<void> _selectDate() async{
           const Text('PRODUCT NAME'),
           const SizedBox(height: 5),
           TextField(
+            controller: nameController,
             decoration: InputDecoration(
               border: OutlineInputBorder(),
-              labelText: 'Enter product name',
+              hintText: 'Enter product name',
             ),
           ),
 
@@ -191,11 +257,12 @@ Future<void> _selectDate() async{
           const Text('DESCRIPTION'),
           const SizedBox(height: 5),
           TextField(
+            controller: descriptionController,
             minLines: 1,
             maxLines: null,
             decoration: InputDecoration(
               border: OutlineInputBorder(),
-              labelText: 'Tap to add description',
+              hintText: 'Tap to add description',
             ),
           ),
         ],
@@ -208,7 +275,7 @@ Future<void> _selectDate() async{
 
 Text('BARCODE NUMBER'),
 
-SizedBox(height: 10),
+SizedBox(height: 5),
 
 Stack(
   clipBehavior: Clip.none,
@@ -216,49 +283,48 @@ Stack(
     TextField(
       controller: barcodeController,
       decoration: InputDecoration(
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.grey),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        labelText: 'Barcode number...',
+        border: OutlineInputBorder(),
+        hintText: 'Barcode number...',
       ),
     ),
 
     Positioned(
-      right: 12,
-      top: 8,
-      child: Material(
-        elevation: 1,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12),),
-        color: Colors.white,
-        child: InkWell(
-          onTap: () async {
-  final result = await Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => const BarcodeScannerPage(),
-    ),
-  );
-
-  if (result != null) {
-    setState(() {
-       barcodeController.text = result;// assign to your text field controller or variable
-      print("Scanned: $result");
-    });
-  }
-},
-          customBorder: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12),),
-          child: Padding(
-            padding: EdgeInsets.all(6),
-            child: Icon(
-              Icons.qr_code_scanner,
-              color: Colors.black,
-            ),
+  right: 8,
+  top: 6,
+  child: Material(
+    color: Colors.transparent,
+    child: InkWell(
+      onTap: () async {
+        await Future.delayed(const Duration(milliseconds: 300));
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const BarcodeScannerPage(),
           ),
+        );
+
+        if (result != null) {
+          setState(() {
+            barcodeController.text = result;
+            print("Scanned: $result");
+          });
+        }
+      },
+      borderRadius: BorderRadius.circular(8),
+      splashColor: Colors.blue.withOpacity(0.2),
+      highlightColor: Colors.blue.withOpacity(0.1),
+
+      child: const Padding(
+        padding: EdgeInsets.all(6),
+        child: Icon(
+          Icons.qr_code_scanner,
+          size: 30,
+          color: Colors.black,
         ),
       ),
     ),
+  ),
+),
   ],
 ),
                 SizedBox(height: 20.0),
@@ -277,14 +343,20 @@ Stack(
                     ),
                   ],
                 ),
+                SizedBox(height: 5),
                 Row(
                   children: [
                     // First TextField
                     Flexible(
                       child: TextField(
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        controller: numberofitemsController,
                         decoration: InputDecoration(
-                          labelText: '00:00',
-                          enabledBorder: OutlineInputBorder(
+                          hintText: '00:00',
+                          border: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
                           ),
                         ),
@@ -295,11 +367,11 @@ Stack(
                       child: TextField(
                         controller: _dateContoller,
                         decoration: InputDecoration(
-                          labelText: 'Select Date',
+                          hintText: 'Select Date',
                           filled: true,
                           fillColor: Colors.transparent,
                           prefixIcon: Icon(Icons.calendar_today),
-                          enabledBorder: OutlineInputBorder(
+                          border: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
                           ),
                         ),
@@ -332,9 +404,14 @@ Stack(
                     // First TextField
                     Flexible(
                       child: TextField(
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        controller: originalprice,
                         decoration: InputDecoration(
-                          labelText: 'P 00.0',
-                          enabledBorder: OutlineInputBorder(
+                          hintText: 'P 00.0',
+                          border: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
                           ),
                         ),
@@ -343,10 +420,15 @@ Stack(
                     SizedBox(width: 10.0), // Second TextField
                     Flexible(
                       child: TextField(
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        controller: srpController,
                         decoration: InputDecoration(
-                          labelText: 'P 00.0',
+                          hintText: 'P 00.0',
                           fillColor: Colors.transparent,
-                          enabledBorder: OutlineInputBorder(
+                          border: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
                           ),
                         ),
@@ -361,6 +443,8 @@ Stack(
                   ),
                 DropdownMenu<String>(
   width: double.infinity,
+   enableFilter: true, // allows typing/searching
+  requestFocusOnTap: true,
   initialSelection: 'Canned Goods',
   onSelected: (String? newValue) {
     print('Selected: $newValue');
@@ -376,7 +460,9 @@ Row(
   children: [
     Expanded(
       child: ElevatedButton.icon(
-        onPressed: () {},
+        onPressed: () {
+          savedproduct(userId);//print(_selectedImage);
+        },
         icon: Icon(Icons.add, color: Colors.white),
         label: Text('Add'),
         style: ElevatedButton.styleFrom(
@@ -400,6 +486,12 @@ Row(
   @override
 void dispose() {
   barcodeController.dispose();
+  _dateContoller.dispose();
+  nameController.dispose();
+  descriptionController.dispose();
+  numberofitemsController.dispose();
+  originalprice.dispose();
+  srpController.dispose();
   super.dispose();
   }
 }
