@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/screens/purchase/listof_purchase.dart';
 import 'package:flutter_application_1/screens/settings/settings_main.dart';
 import 'package:flutter_application_1/services/auth_gate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,6 +49,7 @@ class MainApp extends ConsumerWidget {
         '/logout': (context) => const AuthGate(),
         '/account': (context) => Account(),
         '/display': (context) => const Display(),
+        '/purchaseList': (context) => const ListofPurchase(),
       },
       debugShowCheckedModeBanner: false,
     );

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/screens/purchase/listof_purchase.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../designs/drawer.dart';
 import '../../designs/themes.dart';
 import '../../designs/appbar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'listof_purchase.dart';
 
 
 
-import 'package:flutter/material.dart';
 
 class purchase_section extends StatefulWidget {
   const purchase_section({super.key});
@@ -20,13 +21,42 @@ class purchase_section extends StatefulWidget {
 class _purchase_sectionState extends State<purchase_section> {
   final TextEditingController _searchController = TextEditingController();
   
-  // State for Product 1
   bool _isItemSelected = false;
   int _quantity = 1; 
 
-  // State for Product 2
   bool _isItemSelected2 = false;
   int _quantity2 = 1;
+
+  bool _isItemSelected3 = false;
+  int _quantity3 = 1;
+
+  bool _isItemSelected4 = false;
+  int _quantity4 = 1;
+
+  bool _isItemSelected5 = false;
+  int _quantity5 = 1;
+
+  // Function to calculate Total Price
+  double _calculateTotalPrice() {
+    double total = 0;
+    if (_isItemSelected) total += (150.0 * _quantity);
+    if (_isItemSelected2) total += (250.0 * _quantity2);
+    if (_isItemSelected3) total += (100.0 * _quantity3);
+    if (_isItemSelected4) total += (75.0 * _quantity4);
+    if (_isItemSelected5) total += (1200.0 * _quantity5);
+    return total;
+  }
+
+  // Function to calculate Total Items
+  int _calculateTotalItems() {
+    int count = 0;
+    if (_isItemSelected) count += _quantity;
+    if (_isItemSelected2) count += _quantity2;
+    if (_isItemSelected3) count += _quantity3;
+    if (_isItemSelected4) count += _quantity4;
+    if (_isItemSelected5) count += _quantity5;
+    return count;
+  }
 
   @override
   void dispose() {
@@ -37,7 +67,9 @@ class _purchase_sectionState extends State<purchase_section> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Purchase')),
+      appBar: AppBarDesign(page: 'Purchase'),
+      endDrawer: AppDrawer(page: '/purchase'),
+
       body: Column(
         children: [
           buildSearchBar(
@@ -45,7 +77,7 @@ class _purchase_sectionState extends State<purchase_section> {
             onChanged: (value) => print("Searching for: $value"),
           ),
           Expanded(
-            child: SingleChildScrollView( // Added scroll view in case list gets long
+            child: SingleChildScrollView( 
               child: Column(
                 children: [
                   const SizedBox(height: 10),
@@ -63,7 +95,6 @@ class _purchase_sectionState extends State<purchase_section> {
                   ),
                   const SizedBox(height: 10),
                   
-                  // Product 1
                   productRow(
                     name: "Product 1",
                     stock: 15,
@@ -75,7 +106,6 @@ class _purchase_sectionState extends State<purchase_section> {
                     onDecrease: () => setState(() { if (_quantity > 1) _quantity--; }), 
                   ),
 
-                  // Product 2 (Added)
                   productRow(
                     name: "Product 2",
                     stock: 20,
@@ -86,9 +116,96 @@ class _purchase_sectionState extends State<purchase_section> {
                     onIncrease: () => setState(() => _quantity2++), 
                     onDecrease: () => setState(() { if (_quantity2 > 1) _quantity2--; }), 
                   ),
+
+                  productRow(
+                    name: "Product 3",
+                    stock: 10,
+                    price: 100.0,
+                    isSelected: _isItemSelected3,
+                    quantity: _quantity3, 
+                    onTap: () => setState(() => _isItemSelected3 = !_isItemSelected3),
+                    onIncrease: () => setState(() => _quantity3++), 
+                    onDecrease: () => setState(() { if (_quantity3 > 1) _quantity3--; }), 
+                  ),
+
+                  productRow(
+                    name: "Product 4",
+                    stock: 50,
+                    price: 75.0,
+                    isSelected: _isItemSelected4,
+                    quantity: _quantity4, 
+                    onTap: () => setState(() => _isItemSelected4 = !_isItemSelected4),
+                    onIncrease: () => setState(() => _quantity4++), 
+                    onDecrease: () => setState(() { if (_quantity4 > 1) _quantity4--; }), 
+                  ),
+
+                  productRow(
+                    name: "Product 5",
+                    stock: 5,
+                    price: 1200.0,
+                    isSelected: _isItemSelected5,
+                    quantity: _quantity5, 
+                    onTap: () => setState(() => _isItemSelected5 = !_isItemSelected5),
+                    onIncrease: () => setState(() => _quantity5++), 
+                    onDecrease: () => setState(() { if (_quantity5 > 1) _quantity5--; }), 
+                  ),
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: buildBottomBar(),
+    );
+  }
+
+  Widget buildBottomBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Total: ₱${_calculateTotalPrice().toStringAsFixed(2)}",
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "No. of Items: ${_calculateTotalItems()}",
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+            ],
+          ),
+          ElevatedButton(
+            onPressed: () {
+              print("Total Price: ${_calculateTotalPrice()}");
+              Navigator.push(
+    context,
+    MaterialPageRoute<void>(
+      builder: (context) => const ListofPurchase(),
+    ),
+  );
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              backgroundColor: Colors.blue,
+            ),
+            child: const Text("Confirm", style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w500)),
           ),
         ],
       ),
@@ -136,7 +253,6 @@ class _purchase_sectionState extends State<purchase_section> {
             ),
           ),
         ),
-        
         if (isSelected)
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
