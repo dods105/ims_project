@@ -105,12 +105,10 @@ class InventoryNotifier extends AsyncNotifier<InventoryState> {
     await refresh();
   }
 
-  Future<String?> pickAndSaveImage() async {
+  Future<String?> pickAndSaveImage(ImageSource source) async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-    );
+    final picked = await picker.pickImage(source: source, imageQuality: 80);
+
     if (picked == null) return null;
 
     final appDir = await getApplicationDocumentsDirectory();

@@ -51,6 +51,7 @@ class DatabaseHelper {
         expiry_date TEXT,
         barcode TEXT,
         description TEXT,
+        image_path TEXT,
         FOREIGN KEY(user_id) REFERENCES users(id)
       )
     ''');
@@ -249,7 +250,8 @@ class DatabaseHelper {
     if (product.expiryDate == null || product.expiryDate == "") {
       existing = await db.query(
         'products',
-        where: 'user_id = ? AND name = ? AND (expiry_date IS NULL OR expiry_date = "")',
+        where:
+            'user_id = ? AND name = ? AND (expiry_date IS NULL OR expiry_date = "")',
         whereArgs: [product.userId, product.name],
       );
     } else {

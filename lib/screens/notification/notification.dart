@@ -42,7 +42,7 @@ class NotificationPage extends ConsumerWidget {
                   ),
                   Tab(
                     child: Text(
-                      'Exprired Products',
+                      'Expired Products',
                       style: TextStyle(color: cs.surfaceVariant),
                     ),
                   ),
@@ -174,9 +174,36 @@ class NotifCard extends StatelessWidget {
                   ),
                 ],
               ),
+              trailing: IconButton(
+                icon: Icon(Icons.delete_outline, color: Colors.red),
+                onPressed: () => _confirmDelete(context),
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Notification?'),
+        content: const Text('This will permanently remove this notification.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              onDelete();
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
     );
   }
@@ -258,6 +285,10 @@ class ExpiredCard extends StatelessWidget {
                   ],
                 ),
               ],
+            ),
+            trailing: IconButton(
+              icon: Icon(Icons.delete_outline, color: Colors.red),
+              onPressed: () => _confirmDelete(context),
             ),
           ),
         ],
