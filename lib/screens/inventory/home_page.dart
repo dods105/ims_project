@@ -11,41 +11,37 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    //fakk jehron
+
     return Scaffold(
-      //Using your existing AppBar Component
       appBar: AppBarDesign(page: "STORAGE"),
-      //Using your existing Drawer Component
       endDrawer: const AppDrawer(page: '/inventory'),
 
       body: Column(
         children: [
           const SizedBox(height: 20),
-          //Search Bar for Image
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Search...',
-                prefixIcon: const Icon(Icons.search), // Line 39 was here
-                suffixIcon: const Icon(
-                  Icons.qr_code_scanner,
-                ), // The icon on the right
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.qr_code_scanner),
+                  onPressed: () {
+                    // TODO: barcode scan logic
+                  },
                 ),
               ),
             ),
           ),
 
-          // Column Headers
+          const SizedBox(height: 10),
+
           Padding(
-            padding: EdgeInsets.fromLTRB(30, 20, 30, 10),
+            padding: const EdgeInsets.fromLTRB(30, 20, 30, 10),
             child: Row(
-              children: [
+              children: const [
                 Expanded(
                   flex: 3,
                   child: Text(
@@ -72,16 +68,13 @@ class HomePage extends ConsumerWidget {
             ),
           ),
 
-          // The list of items mimicking the blue rows
           Expanded(
             child: ListView.builder(
               itemCount: 10,
               itemBuilder: (context, index) {
                 return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 4,
-                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       vertical: 12,
