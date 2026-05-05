@@ -24,5 +24,5 @@ class ProfileNotifier extends StateNotifier<String?> {
     state = picture.path;
   }
 
-  void clear() => state = null; // clear profile picture on logout
+  void clear() => state = null;
 }

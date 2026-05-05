@@ -5,15 +5,10 @@ import 'package:crypto/crypto.dart';
 import '../models/login/user.dart';
 import '../models/products/products.dart';
 import 'package:intl/intl.dart';
+import '../models/products/expired_product.dart';
+import '../models/notifications/notification_model.dart';
 
 class DatabaseHelper {
-  // Hash password
-  String _hashPassword(String password) {
-    final bytes = utf8.encode(password);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
-  }
-
   //all about database
 
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -75,6 +70,38 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
+      CREATE TABLE expired_products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        quantity INTEGER NOT NULL,
+        selling_price REAL NOT NULL,
+        original_price REAL,
+        product_type TEXT,
+        expiry_date TEXT NOT NULL,
+        description TEXT,
+        image_path TEXT,
+        moved_at TEXT NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        product_id INTEGER,
+        product_name TEXT NOT NULL,
+        quantity INTEGER NOT NULL,
+        expiry_date TEXT NOT NULL,
+        type TEXT NOT NULL,
+        is_read INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+      )
+    ''');
+
+    await db.execute('''
       CREATE TABLE transaction_items (
         id INTEGER PRIMARY KEY,
         transaction_id TEXT NOT NULL,
@@ -97,6 +124,14 @@ class DatabaseHelper {
 
   // all about user
 
+  // Hash password
+  String _hashPassword(String password) {
+    final bytes = utf8.encode(password);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
+  // checks login credentials
   Future<User?> checkUser(String username, String password) async {
     final db = await instance.database;
     final hashedPassword = _hashPassword(password);
@@ -127,12 +162,8 @@ class DatabaseHelper {
   Future<User> createUser(User user) async {
     final db = await instance.database;
     final hashedPassword = _hashPassword(user.password);
-    final userWithHashedPassword = User(
-      username: user.username,
-      password: hashedPassword,
-    );
-    final id = await db.insert('users', userWithHashedPassword.toMap());
-    print('user: ${user.username} now created');
+    final newUser = User(username: user.username, password: hashedPassword);
+    final id = await db.insert('users', newUser.toMap());
     return User(id: id, username: user.username, password: hashedPassword);
   }
 
@@ -166,10 +197,92 @@ class DatabaseHelper {
   //it will just create a new product with the same name.
   //We need to add logic that checks if the product name already exists for the user,
   //if it does, we update the quantity and selling price instead of creating a new product.
-  Future<int> insertProduct(Product product) async {
+
+  // for adding prod only (Adding page)
+  Future<void> insertOrUpdateProduct(Product product) async {
+    final db = await instance.database;
+    List<Map<String, dynamic>> existing;
+
+    if (product.expiryDate == null || product.expiryDate!.isEmpty) {
+      // No expiry
+      existing = await db.query(
+        'products',
+        where:
+            'user_id = ? AND name = ? AND (expiry_date IS NULL or expiry_date = "")',
+        whereArgs: [product.userId, product.name],
+      );
+    } else {
+      // same expiry date
+      existing = await db.query(
+        'products',
+        where: 'user_id = ? AND name = ? AND expiry_date = ?',
+        whereArgs: [product.userId, product.name, product.expiryDate],
+      );
+    }
+
+    if (existing.isNotEmpty) {
+      // same prod info exists (update only prices or quantity)
+      final existingId = existing.first['id'] as int; // prod id
+      final existingStock = existing.first['quantity'] as int;
+
+      await db.update(
+        'products',
+        {
+          'quantity': existingStock + product.quantity,
+          'selling_price': product.sellingPrice,
+          'original_price': product.originalPrice,
+        },
+        where: 'id = ?',
+        whereArgs: [existingId],
+      );
+    } else {
+      // new product
+      await db.insert('products', product.toMap());
+    }
+  }
+
+  // for editing a product info ?????????????
+  Future<Product?> getExistingProduct(Product product) async {
+    final db = await instance.database;
+    List<Map<String, dynamic>> existing;
+
+    if (product.expiryDate == null || product.expiryDate == "") {
+      existing = await db.query(
+        'products',
+        where: 'user_id = ? AND name = ? AND (expiry_date IS NULL OR expiry_date = "")',
+        whereArgs: [product.userId, product.name],
+      );
+    } else {
+      existing = await db.query(
+        'products',
+        where: 'user_id = ? AND name = ? AND expiry_date = ?',
+        whereArgs: [product.userId, product.name, product.expiryDate],
+      );
+    }
+
+    if (existing.isNotEmpty) {
+      return Product.fromMap(existing.first);
+    }
+
+    return null;
+  }
+
+  // get user products
+  Future<List<Product>> getProductsByUser(int userId) async {
+    final db = await instance.database;
+
+    final result = await db.query(
+      'products',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+    );
+    return result.map((product) => Product.fromMap(product)).toList();
+  }
+
+  /*Future<int> insertProduct(Product product) async {
     final db = await instance.database;
     return await db.insert('products', product.toMap());
-  }
+  }*/
 
   Future<int> deleteProduct(int id) async {
     final db = await instance.database;
@@ -190,15 +303,169 @@ class DatabaseHelper {
     );
   }
 
-  Future<List<Product>> getProductsByUser(int userId) async {
-    final db = await instance.database;
+  //  EXPIRED PRODUCTS
 
-    final result = await db.query(
-      'products',
+  Future<int> insertExpiredProduct(ExpiredProduct product) async {
+    final db = await instance.database;
+    return await db.insert('expired_products', product.toMap());
+  }
+
+  Future<List<ExpiredProduct>> getExpiredProductByUSer(int userId) async {
+    final db = await instance.database;
+    final productsExpired = await db.query(
+      'expired_products',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      orderBy: 'moved_at DESC',
+    );
+    return productsExpired
+        .map((product) => ExpiredProduct.fromMap(product))
+        .toList();
+  }
+
+  // delete expired product and all notif of product
+  Future<void> deleteExpiredProduct(int id) async {
+    final db = await instance.database;
+    final expiredProduct = await db.query(
+      'expired_products',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    if (expiredProduct.isNotEmpty) {
+      final name = expiredProduct.first['name'];
+      final expiryDate = expiredProduct.first['expiry_date'];
+      final userId = expiredProduct.first['user_id'];
+      // delete all notif about the product
+      await db.delete(
+        'notifications',
+        where: 'user_id = ? AND expiry_date = ? AND product_name = ?',
+        whereArgs: [userId, expiryDate, name],
+      );
+    }
+    // del the expired prod
+    await db.delete('expired_products', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // Notifications
+
+  Future<int> insertNotification(AppNotification notif) async {
+    final db = await instance.database;
+    return await db.insert('notifications', notif.toMap());
+  }
+
+  Future<List<AppNotification>> getNotifications(int userId) async {
+    final db = await instance.database;
+    final notifs = await db.query(
+      'notifications',
       where: 'user_id = ?',
       whereArgs: [userId],
     );
-    return result.map((e) => Product.fromMap(e)).toList();
+
+    return notifs.map((notif) => AppNotification.fromMap(notif)).toList();
+  }
+
+  Future<void> deleteNotification(int id) async {
+    final db = await instance.database;
+    await db.delete('notifications', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> markNotificationRead(int id) async {
+    final db = await database;
+    await db.update(
+      'notifications',
+      {'is_read': 1},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> checkAndProcessExpiry(int userId) async {
+    final db = await database;
+    final today = DateTime.now();
+    final todayStr = DateFormat('yyyy-MM-dd').format(today);
+    final in7Days = DateFormat(
+      'yyyy-MM-dd',
+    ).format(today.add(const Duration(days: 7)));
+    final now = today.toIso8601String();
+
+    // expired products
+    final expired = await db.query(
+      'products',
+      where:
+          'user_id = ? AND expiry_date IS NOT NULL AND expiry_date != "" AND expiry_date <= ?',
+      whereArgs: [userId, todayStr],
+    );
+
+    // Expired Items
+    for (final p in expired) {
+      // Move product to expired_products
+      await db.insert('expired_products', {
+        'user_id': p['user_id'],
+        'name': p['name'],
+        'quantity': p['quantity'],
+        'selling_price': p['selling_price'],
+        'original_price': p['original_price'],
+        'product_type': p['product_type'],
+        'expiry_date': p['expiry_date'],
+        'description': p['description'],
+        'image_path': p['image_path'],
+        'moved_at': todayStr,
+      });
+
+      // search notif table
+      final alreadyNotified = await db.query(
+        'notifications',
+        where:
+            "user_id = ? AND product_name = ? AND expiry_date = ? AND type = 'expired'",
+        whereArgs: [userId, p['name'], p['expiry_date']],
+      );
+      if (alreadyNotified.isEmpty) {
+        // create notif if doesnt exist yet
+        await db.insert('notifications', {
+          'user_id': userId,
+          'product_id': p['id'],
+          'product_name': p['name'],
+          'quantity': p['quantity'],
+          'expiry_date': p['expiry_date'],
+          'type': 'expired',
+          'is_read': 0,
+          'created_at': now,
+        });
+      }
+
+      // Remove from inventory
+      await db.delete('products', where: 'id = ?', whereArgs: [p['id']]);
+    }
+
+    //  Find products expiring in 1 week
+    final expiringSoon = await db.query(
+      'products',
+      where:
+          'user_id = ? AND expiry_date IS NOT NULL AND expiry_date != "" AND expiry_date > ? AND expiry_date <= ?',
+      whereArgs: [userId, todayStr, in7Days],
+    );
+
+    for (final p in expiringSoon) {
+      final alreadyNotified = await db.query(
+        'notifications',
+        where:
+            "user_id = ? AND product_name = ? AND expiry_date = ? AND type = 'expiringSoon'",
+        whereArgs: [userId, p['name'], p['expiry_date']],
+      );
+      if (alreadyNotified.isEmpty) {
+        await db.insert('notifications', {
+          'user_id': userId,
+          'product_id': p['id'],
+          'product_name': p['name'],
+          'quantity': p['quantity'],
+          'expiry_date': p['expiry_date'],
+          'type': 'expiringSoon',
+          'is_read': 0,
+          'created_at': now,
+        });
+      }
+    }
   }
 
   // ALL ABOUT TRANSACTIONS

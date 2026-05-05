@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class DisplaySettings {
   final ThemeMode themeMode;
-  final double fontScale; // 0.85 = Small, 1.0 = Medium, 1.2 = Large
+  final double fontScale;
   final String fontFamily;
 
   const DisplaySettings({
@@ -25,7 +25,7 @@ class DisplaySettings {
 }
 
 //  Keys
-const _kThemeMode = 'display_theme_mode'; // 'light' | 'dark' | 'system'
+const _kThemeMode = 'display_theme_mode';
 const _kFontScale = 'display_font_scale';
 const _kFontFamily = 'display_font_family';
 

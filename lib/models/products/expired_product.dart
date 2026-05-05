@@ -1,4 +1,4 @@
-class Product {
+class ExpiredProduct {
   final int? id;
   final int userId;
   final String name;
@@ -6,12 +6,12 @@ class Product {
   final double sellingPrice;
   final double? originalPrice;
   final String? productType;
-  final String? expiryDate;
-  final String? barcode;
+  final String expiryDate;
   final String? description;
   final String? imagePath;
+  final String movedAt; // date moved to exipred table db
 
-  Product({
+  ExpiredProduct({
     this.id,
     required this.userId,
     required this.name,
@@ -19,13 +19,13 @@ class Product {
     required this.sellingPrice,
     this.originalPrice,
     this.productType,
-    this.expiryDate,
-    this.barcode,
+    required this.expiryDate,
     this.description,
     this.imagePath,
+    required this.movedAt,
   });
 
-  // prod to db
+  // product obj to db
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -36,15 +36,15 @@ class Product {
       'original_price': originalPrice,
       'product_type': productType,
       'expiry_date': expiryDate,
-      'barcode': barcode,
       'description': description,
       'image_path': imagePath,
+      'moved_at': movedAt,
     };
   }
 
-  // db to product obj
-  factory Product.fromMap(Map<String, dynamic> map) {
-    return Product(
+  // db back to prod object
+  factory ExpiredProduct.fromMap(Map<String, dynamic> map) {
+    return ExpiredProduct(
       id: map['id'],
       userId: map['user_id'],
       name: map['name'],
@@ -53,9 +53,9 @@ class Product {
       originalPrice: map['original_price'],
       productType: map['product_type'],
       expiryDate: map['expiry_date'],
-      barcode: map['barcode'],
       description: map['description'],
       imagePath: map['image_path'],
+      movedAt: map['moved_at'],
     );
   }
 }

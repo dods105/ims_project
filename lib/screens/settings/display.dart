@@ -111,7 +111,7 @@ class _FontSizeCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: _sizes.map((s) {
-              final isSelected = (currentScale - s.scale).abs() < 0.01;
+              final isSelected = (currentScale - s.scale).abs() < 0.05;
 
               return InkWell(
                 onTap: () => onSelect(s.scale),
