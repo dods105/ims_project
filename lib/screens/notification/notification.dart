@@ -155,7 +155,7 @@ class NotifCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${notification.quantity} items are about to expire in',
+                        '${notification.quantity} items are about to expire on',
                         style: TextStyle(
                           color: cs.onSurfaceVariant,
                           fontWeight: FontWeight.w100,
