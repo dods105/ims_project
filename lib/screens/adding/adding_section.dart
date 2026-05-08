@@ -20,9 +20,7 @@ class AddingSectionPage extends ConsumerStatefulWidget {
 }
 
 class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
-  //  controller
   final TextEditingController barcodeController = TextEditingController();
-
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController expiryController = TextEditingController();
   bool isProductTypeCustom = false;
