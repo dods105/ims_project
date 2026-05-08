@@ -27,9 +27,9 @@ class _BarcodeScannerPageState extends State<BarcodeScannerPage> {
           if (value != null) {
             _isScanned = true;
 
-           Future.delayed(const Duration(milliseconds: 200), () {
-  Navigator.pop(context, value);
-});
+            Future.delayed(const Duration(milliseconds: 200), () {
+              Navigator.pop(context, value);
+            });
           }
         },
       ),
