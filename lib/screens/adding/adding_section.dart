@@ -405,32 +405,52 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                 TextField(
                   controller: barcodeController,
                   decoration: InputDecoration(
+                    hintText: 'Barcode number...',
                     border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: Colors.grey),
                     ),
-                    hintText: 'Barcode number...',
-                    suffixIcon: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(8),
-                        splashColor: Colors.blue.withOpacity(0.2),
-                        highlightColor: Colors.blue.withOpacity(0.15),
-                        onTap: () async {
-                          await Future.delayed(Duration(milliseconds: 150));
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => BarcodeScannerPage(),
+
+                    suffixIcon: Transform.translate(
+                      offset: const Offset(-6, 0),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          customBorder: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          splashColor: Colors.blue.withOpacity(0.2),
+                          highlightColor: Colors.blue.withOpacity(0.15),
+                          onTap: () async {
+                            await Future.delayed(
+                              const Duration(milliseconds: 150),
+                            );
+
+                            final scannedBarcode = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const BarcodeScannerPage(),
+                              ),
+                            );
+
+                            if (scannedBarcode != null) {
+                              setState(() {
+                                barcodeController.text = scannedBarcode;
+                              });
+                            }
+                          },
+
+                          child: const SizedBox(
+                            width: 30,
+                            height: 30,
+                            child: Center(
+                              child: Icon(
+                                Icons.qr_code_scanner,
+                                size: 28,
+                                color: Colors.black,
+                              ),
                             ),
-                          );
-                        },
-                        child: SizedBox(
-                          width: 56,
-                          height: 56,
-                          child: Icon(
-                            Icons.qr_code_scanner,
-                            size: 32,
-                            color: const Color.fromARGB(255, 0, 0, 0),
                           ),
                         ),
                       ),
