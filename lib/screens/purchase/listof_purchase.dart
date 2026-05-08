@@ -6,6 +6,8 @@ import '../../designs/themes.dart';
 import '../../designs/appbar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'purchase_section.dart'; 
+
 
 
 
@@ -23,9 +25,8 @@ class _ListofPurchasState extends State<ListofPurchase> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text('Purchase List', style: AppTheme.displayLarge),
+        title: const Text('Purchase List'),
       ),
-      endDrawer: AppDrawer(page: '/purchase'),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -100,46 +101,79 @@ class _ListofPurchasState extends State<ListofPurchase> {
 
               const SizedBox(height: 16),
 
-              // ADD Button
-              Container(
-                height: 70,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black),
-                ),
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.add, size: 28),
-                    Text(
-                      "ADD",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    )
-                  ],
+              // UPDATED ADD Button
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => purchase_section(), 
+                    ),
+                  );
+                },
+                child: Container(
+                  height: 70,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300], // Grey background
+                    border: Border.all(color: Colors.black),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Black circle background for the icon
+                      Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Colors.black,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.add, 
+                          size: 20, 
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        "ADD",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      )
+                    ],
+                  ),
                 ),
               ),
 
               const SizedBox(height: 24),
 
-              // Total Section
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  buildLine("TOTAL:", "P 400.00"),
-                  const SizedBox(height: 10),
-                  buildInputLine("CASH:"),
-                  const SizedBox(height: 10),
-                  buildInputLine("CHANGE:"),
-                ],
+              // Total Section (Aligned Right)
+              Align(
+                alignment: Alignment.centerRight,
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.46,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      buildLine("TOTAL:", "P 400.00"),
+                      const SizedBox(height: 10),
+                      buildInputLine("CASH:"),
+                      const SizedBox(height: 10),
+                      buildInputLine("CHANGE:"),
+                    ],
+                  ),
+                ),
               ),
 
               const Spacer(),
 
               // Bottom Buttons
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   buildButton("Clear"),
-                  buildButton("Edit"),
                   buildButton("Checkout"),
                 ],
               ),
@@ -194,7 +228,7 @@ class _ListofPurchasState extends State<ListofPurchase> {
     return ElevatedButton(
       onPressed: () {},
       style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -204,4 +238,3 @@ class _ListofPurchasState extends State<ListofPurchase> {
     );
   }
 }
- 
