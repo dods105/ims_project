@@ -20,6 +20,18 @@ class AddingSectionPage extends ConsumerStatefulWidget {
 }
 
 class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
+  //  controller
+  final TextEditingController barcodeController = TextEditingController();
+
+  final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController expiryController = TextEditingController();
+  bool isProductTypeCustom = false;
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController originalprice = TextEditingController();
+  final TextEditingController prodcuttypeController = TextEditingController();
+  String? productType;
+  final TextEditingController qtyCtrl = TextEditingController();
+  final TextEditingController srpController = TextEditingController();
   final List<String> types = [
     "DRINKS",
     "FROZEN FOODS",
@@ -29,18 +41,10 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
     "SNACKS",
     'TOILETRIES',
     'CLEANING SUPPLIES',
-    'OTHERS',
   ];
-  String? _imagePath;
+
   String? _expiryDate;
-  //  controller
-  final TextEditingController barcodeController = TextEditingController();
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController descriptionController = TextEditingController();
-  final TextEditingController qtyCtrl = TextEditingController();
-  final TextEditingController originalprice = TextEditingController();
-  final TextEditingController srpController = TextEditingController();
-  final TextEditingController expiryController = TextEditingController();
+  String? _imagePath;
 
   @override
   void dispose() {
@@ -51,7 +55,138 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
     originalprice.dispose();
     srpController.dispose();
     expiryController.dispose();
+    prodcuttypeController.dispose();
     super.dispose();
+  }
+
+  Future<void> savedproduct(int userId) async {
+    if (nameController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Enter Product Name"),
+          backgroundColor: Colors.red,
+          duration: Duration(milliseconds: 1500),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    if (qtyCtrl.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Enter No. of Items"),
+          backgroundColor: Colors.red,
+          duration: Duration(milliseconds: 1500),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    if (originalprice.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Enter Original Price"),
+          backgroundColor: Colors.red,
+          duration: Duration(milliseconds: 1500),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    if (srpController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Enter SRP"),
+          backgroundColor: Colors.red,
+          duration: Duration(milliseconds: 1500),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final product = Product(
+      userId: userId,
+      name: nameController.text.trim(),
+      quantity: int.tryParse(qtyCtrl.text) ?? 0,
+      sellingPrice: double.tryParse(srpController.text) ?? 0.0,
+      originalPrice: double.tryParse(originalprice.text) ?? 0.0,
+      productType: productType,
+      expiryDate: _expiryDate,
+      barcode: barcodeController.text.trim().isEmpty
+          ? null
+          : barcodeController.text.trim(),
+      description: descriptionController.text.trim().isEmpty
+          ? null
+          : descriptionController.text.trim(),
+      imagePath: _imagePath,
+    );
+
+    final duplicateProduct = await ref
+        .read(inventoryProvider.notifier)
+        .getExistingProduct(product);
+
+    if (duplicateProduct != null && mounted) {
+      final double sellingPrice = duplicateProduct.sellingPrice;
+      final double originalPrice = duplicateProduct.originalPrice ?? 0.0;
+      final double newSell = product.sellingPrice;
+      final double newOriginal = product.originalPrice ?? 0.0;
+
+      bool priceChange =
+          sellingPrice != newSell || originalPrice != newOriginal;
+
+      if (priceChange) {
+        final bool? confirm = await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Price Change Detected'),
+              content: const Text(
+                'This product already exists in your inventory with a different price.\n\n'
+                'Do you want to update the price for ALL existing stock of this product to the new price?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text(
+                    'No, Cancel',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.brandBlue,
+                  ),
+                  child: const Text(
+                    'Yes, Update Price',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+
+        if (confirm != true) {
+          return;
+        }
+      }
+    }
+
+    await ref.read(inventoryProvider.notifier).addProduct(product);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Product added successfully!"),
+          backgroundColor: AppTheme.textGreen,
+        ),
+      );
+
+      Navigator.pushReplacementNamed(context, '/inventory');
+    }
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -130,135 +265,6 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
     }
   }
 
-  Future<void> savedproduct(int userId) async {
-    if (nameController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Enter Product Name"),
-          backgroundColor: Colors.red,
-          duration: Duration(milliseconds: 1500),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-    if (qtyCtrl.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Enter No. of Items"),
-          backgroundColor: Colors.red,
-          duration: Duration(milliseconds: 1500),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-    if (originalprice.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Enter Original Price"),
-          backgroundColor: Colors.red,
-          duration: Duration(milliseconds: 1500),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    if (srpController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Enter SRP"),
-          backgroundColor: Colors.red,
-          duration: Duration(milliseconds: 1500),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    final product = Product(
-      userId: userId,
-      name: nameController.text.trim(),
-      quantity: int.tryParse(qtyCtrl.text) ?? 0,
-      sellingPrice: double.tryParse(srpController.text) ?? 0.0,
-      originalPrice: double.tryParse(originalprice.text) ?? 0.0,
-      expiryDate: _expiryDate,
-      barcode: barcodeController.text.trim().isEmpty
-          ? null
-          : barcodeController.text.trim(),
-      description: descriptionController.text.trim().isEmpty
-          ? null
-          : descriptionController.text.trim(),
-      imagePath: _imagePath,
-    );
-
-    final duplicateProduct = await ref
-        .read(inventoryProvider.notifier)
-        .getExistingProduct(product);
-
-    if (duplicateProduct != null && mounted) {
-      final double sellingPrice = duplicateProduct.sellingPrice;
-      final double originalPrice = duplicateProduct.originalPrice ?? 0.0;
-      final double newSell = product.sellingPrice;
-      final double newOriginal = product.originalPrice ?? 0.0;
-
-      bool priceChange =
-          sellingPrice != newSell || originalPrice != newOriginal;
-
-      if (priceChange) {
-        final bool? confirm = await showDialog<bool>(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text('Price Change Detected'),
-              content: const Text(
-                'This product already exists in your inventory with a different price.\n\n'
-                'Do you want to update the price for ALL existing stock of this product to the new price?',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text(
-                    'No, Cancel',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.brandBlue,
-                  ),
-                  child: const Text(
-                    'Yes, Update Price',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-
-        if (confirm != true) {
-          return;
-        }
-      }
-    }
-
-    await ref.read(inventoryProvider.notifier).addProduct(product);
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Product added successfully!"),
-          backgroundColor: AppTheme.textGreen,
-        ),
-      );
-
-      Navigator.pushReplacementNamed(context, '/inventory');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final userId = ref.read(authProvider).value?.id;
@@ -324,7 +330,8 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                                       ),
                                     )
                                   : Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Icon(
                                           Icons.add_a_photo,
@@ -369,10 +376,10 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                           TextField(
                             controller: nameController,
                             decoration: InputDecoration(
-                              enabledBorder: OutlineInputBorder(
+                              border: OutlineInputBorder(
                                 borderSide: BorderSide(color: Colors.grey),
                               ),
-                              labelText: 'Enter product name',
+                              hintText: 'Enter product name',
                             ),
                           ),
 
@@ -385,10 +392,10 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                             minLines: 1,
                             maxLines: null, // makes description taller
                             decoration: InputDecoration(
-                              enabledBorder: OutlineInputBorder(
+                              border: OutlineInputBorder(
                                 borderSide: BorderSide(color: Colors.grey),
                               ),
-                              labelText: 'Tap to add description',
+                              hintText: 'Tap to add description',
                             ),
                           ),
                         ],
@@ -397,15 +404,39 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                   ],
                 ),
                 SizedBox(height: 20),
-                Text('BARCODE NUMBER'),
-                SizedBox(height: 5.0),
                 TextField(
                   controller: barcodeController,
                   decoration: InputDecoration(
-                    enabledBorder: OutlineInputBorder(
+                    border: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.grey),
                     ),
-                    labelText: 'Barcode number...',
+                    hintText: 'Barcode number...',
+                    suffixIcon: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        splashColor: Colors.blue.withOpacity(0.2),
+                        highlightColor: Colors.blue.withOpacity(0.15),
+                        onTap: () async {
+                          await Future.delayed(Duration(milliseconds: 150));
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BarcodeScannerPage(),
+                            ),
+                          );
+                        },
+                        child: SizedBox(
+                          width: 56,
+                          height: 56,
+                          child: Icon(
+                            Icons.qr_code_scanner,
+                            size: 32,
+                            color: const Color.fromARGB(255, 0, 0, 0),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 SizedBox(height: 20.0),
@@ -436,7 +467,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                         ],
                         controller: qtyCtrl,
                         decoration: InputDecoration(
-                          hintText: '00:00',
+                          hintText: '0',
                           border: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
                           ),
@@ -448,6 +479,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                       child: TextField(
                         controller: expiryController,
                         decoration: InputDecoration(
+                          hintText: 'Select Date',
                           filled: true,
                           fillColor: Colors.transparent,
                           prefixIcon: Icon(Icons.calendar_today),
@@ -514,17 +546,73 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                   ],
                 ),
                 SizedBox(height: 15),
-                SizedBox(height: 20.0, child: Text('TYPE OF PRODUCT')),
-                DropdownMenu<String>(
-                  width: double.infinity,
-                  initialSelection: types.first,
-                  onSelected: (String? newValue) {},
-                  dropdownMenuEntries: types
-                      .map(
-                        (type) =>
-                            DropdownMenuEntry<String>(value: type, label: type),
-                      )
-                      .toList(),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    DropdownMenu<String>(
+                      width: double.infinity,
+                      initialSelection: productType ?? types.first,
+                      enableFilter: true,
+                      requestFocusOnTap: false,
+                      onSelected: (String? newValue) {
+                        setState(() {
+                          if (newValue == "Other") {
+                            isProductTypeCustom = true;
+                            productType = null;
+                            prodcuttypeController.clear();
+                          } else {
+                            isProductTypeCustom = false;
+                            productType = newValue;
+                          }
+                        });
+                      },
+                      dropdownMenuEntries: [
+                        ...types.map(
+                          (type) => DropdownMenuEntry<String>(
+                            value: type,
+                            label: type,
+                          ),
+                        ),
+                        const DropdownMenuEntry<String>(
+                          value: "Other",
+                          label: "OTHER (TYPE MANUALLY)",
+                        ),
+                      ],
+                    ),
+
+                    if (isProductTypeCustom)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: TextField(
+                          controller: prodcuttypeController,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[a-zA-Z ]'),
+                            ),
+                            TextInputFormatter.withFunction((
+                              oldValue,
+                              newValue,
+                            ) {
+                              final upper = newValue.text.toUpperCase();
+
+                              return newValue.copyWith(
+                                text: upper,
+                                selection: TextSelection.collapsed(
+                                  offset: upper.length,
+                                ),
+                              );
+                            }),
+                          ],
+                          decoration: const InputDecoration(
+                            hintText: "Enter product type",
+                            border: OutlineInputBorder(),
+                          ),
+                          onChanged: (value) {
+                            productType = value.toUpperCase();
+                          },
+                        ),
+                      ),
+                  ],
                 ),
                 SizedBox(height: 20),
 
