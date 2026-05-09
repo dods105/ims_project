@@ -7,6 +7,7 @@ import '../../designs/appbar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'purchase_section.dart'; 
+import 'Buyersinfo.dart';
 
 
 
@@ -16,16 +17,27 @@ class ListofPurchase extends StatefulWidget {
   const ListofPurchase({super.key});
 
   @override
-  _ListofPurchasState createState() => _ListofPurchasState();
+  State<ListofPurchase> createState() => _ListofPurchaseState();
 }
 
-class _ListofPurchasState extends State<ListofPurchase> {
+class _ListofPurchaseState extends State<ListofPurchase> {
+  final TextEditingController _cashController = TextEditingController();
+  final TextEditingController _changeController = TextEditingController();
+
+  @override
+  void dispose() {
+    _cashController.dispose();
+    _changeController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text('Purchase List'),
+        elevation: 0,
       ),
       body: SafeArea(
         child: Padding(
@@ -74,74 +86,48 @@ class _ListofPurchasState extends State<ListofPurchase> {
                 color: Colors.indigo[700],
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    Text("Ref. No.", style: TextStyle(color: Colors.white)),
-                    Text("Name", style: TextStyle(color: Colors.white)),
-                    Text("Quantity", style: TextStyle(color: Colors.white)),
-                    Text("Price", style: TextStyle(color: Colors.white)),
+                    Expanded(child: Center(child: Text("Ref. No.", style: TextStyle(color: Colors.white)))),
+                    Expanded(child: Center(child: Text("Name", style: TextStyle(color: Colors.white)))),
+                    Expanded(child: Center(child: Text("Qty", style: TextStyle(color: Colors.white)))),
+                    Expanded(child: Center(child: Text("Price", style: TextStyle(color: Colors.white)))),
                   ],
                 ),
               ),
 
-              // Sample Row
+              // Sample Row (Ideally this would be a ListView.builder)
               Container(
                 color: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    Text("4243737"),
-                    Text("Ice Cream"),
-                    Text("10"),
-                    Text("400"),
+                    Expanded(child: Center(child: Text("4243737"))),
+                    Expanded(child: Center(child: Text("Ice Cream"))),
+                    Expanded(child: Center(child: Text("10"))),
+                    Expanded(child: Center(child: Text("400"))),
                   ],
                 ),
               ),
 
               const SizedBox(height: 16),
 
-              // UPDATED ADD Button
-              GestureDetector(
+              // ADD Button
+              InkWell(
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => purchase_section(), 
-                    ),
-                  );
+                  // TODO: Logic to add items
                 },
                 child: Container(
-                  height: 70,
+                  height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300], // Grey background
-                    border: Border.all(color: Colors.black),
-                    borderRadius: BorderRadius.circular(4),
+                    color: Colors.grey[300],
+                    border: Border.all(color: Colors.black26),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Column(
+                  child: const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Black circle background for the icon
-                      Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          color: Colors.black,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.add, 
-                          size: 20, 
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        "ADD",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      )
+                      Icon(Icons.add_circle, size: 24),
+                      Text("ADD", style: TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
@@ -149,19 +135,18 @@ class _ListofPurchasState extends State<ListofPurchase> {
 
               const SizedBox(height: 24),
 
-              // Total Section (Aligned Right)
+              // Total Section
               Align(
                 alignment: Alignment.centerRight,
                 child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.46,
+                  width: MediaQuery.of(context).size.width * 0.5,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       buildLine("TOTAL:", "P 400.00"),
                       const SizedBox(height: 10),
-                      buildInputLine("CASH:"),
+                      buildInputLine("CASH:", _cashController),
                       const SizedBox(height: 10),
-                      buildInputLine("CHANGE:"),
+                      buildInputLine("CHANGE:", _changeController),
                     ],
                   ),
                 ),
@@ -169,12 +154,12 @@ class _ListofPurchasState extends State<ListofPurchase> {
 
               const Spacer(),
 
-              // Bottom Buttons
+              // Action Buttons
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  buildButton("Clear"),
-                  buildButton("Checkout"),
+                  Expanded(child: buildClearButton()),
+                  const SizedBox(width: 16),
+                  Expanded(child: buildCheckoutButton()),
                 ],
               ),
             ],
@@ -187,36 +172,30 @@ class _ListofPurchasState extends State<ListofPurchase> {
   Widget buildLine(String label, String value) {
     return Row(
       children: [
-        SizedBox(
-          width: 80,
-          child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        ),
+        SizedBox(width: 70, child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold))),
         Expanded(
           child: Container(
             padding: const EdgeInsets.only(bottom: 4),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.black)),
-            ),
-            child: Text(value),
+            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.black))),
+            child: Text(value, textAlign: TextAlign.right),
           ),
         ),
       ],
     );
   }
 
-  Widget buildInputLine(String label) {
+  Widget buildInputLine(String label, TextEditingController controller) {
     return Row(
       children: [
-        SizedBox(
-          width: 80,
-          child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        ),
-        const Expanded(
+        SizedBox(width: 70, child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold))),
+        Expanded(
           child: TextField(
-            decoration: InputDecoration(
+            controller: controller,
+            textAlign: TextAlign.right,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
               isDense: true,
               contentPadding: EdgeInsets.only(bottom: 4),
-              border: UnderlineInputBorder(),
             ),
           ),
         ),
@@ -224,17 +203,37 @@ class _ListofPurchasState extends State<ListofPurchase> {
     );
   }
 
-  Widget buildButton(String text) {
+  Widget buildClearButton() {
     return ElevatedButton(
-      onPressed: () {},
+      onPressed: () {
+        setState(() {
+          _cashController.clear();
+          _changeController.clear();
+        });
+      },
       style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
         backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
-      child: Text(text, style: const TextStyle(color: Colors.white)),
+      child: const Text("Clear"),
+    );
+  }
+
+  Widget buildCheckoutButton() {
+    return ElevatedButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const Buyersinfo()),
+        );
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      child: const Text("Checkout"),
     );
   }
 }
