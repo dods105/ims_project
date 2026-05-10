@@ -373,11 +373,25 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                           SizedBox(height: 5),
                           TextField(
                             controller: nameController,
+                            textCapitalization: TextCapitalization.characters,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'[A-Z\s]'),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              nameController.value = TextEditingValue(
+                                text: value.toUpperCase(),
+                                selection: TextSelection.collapsed(
+                                  offset: value.length,
+                                ),
+                              );
+                            },
                             decoration: InputDecoration(
                               border: OutlineInputBorder(
                                 borderSide: BorderSide(color: Colors.grey),
                               ),
-                              hintText: 'Enter product name',
+                              hintText: 'Enter Product Name',
                             ),
                           ),
 
