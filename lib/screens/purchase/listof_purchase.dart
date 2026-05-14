@@ -85,7 +85,7 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
     if (cash < purchaseState.totalPrice) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Insufficient cash'),
+          content: Text('Cash input is empty'),
           backgroundColor: Colors.red,
         ),
       );

@@ -159,10 +159,7 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
       _snack('Enter No. of Items', isError: true);
       return;
     }
-    if (originalPriceController.text.isEmpty) {
-      _snack('Enter Original Price', isError: true);
-      return;
-    }
+
     if (srpController.text.isEmpty) {
       _snack('Enter SRP', isError: true);
       return;

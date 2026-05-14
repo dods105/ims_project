@@ -17,7 +17,6 @@ class AppBarDesign extends ConsumerWidget implements PreferredSizeWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider);
     final name = ref.watch(authProvider).value?.username ?? '';
-    final cs = Theme.of(context).colorScheme;
 
     return AppBar(
       title: Row(

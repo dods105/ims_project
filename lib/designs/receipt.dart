@@ -48,7 +48,6 @@ class ShowReceiptBottomSheet {
             Text(
               'DIGITAL RECEIPT',
               style: TextStyle(
-                color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 2,

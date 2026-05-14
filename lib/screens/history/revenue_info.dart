@@ -188,7 +188,7 @@ class _RevenueBreakdownSheetState extends State<RevenueBreakdownSheet> {
                         SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            "Items without a cost price — revenue unknown",
+                            "Items sold without a original price. Revenue is unknown for these:",
                             style: TextStyle(color: Colors.grey, fontSize: 12),
                           ),
                         ),
@@ -223,10 +223,10 @@ class _RevenueBreakdownSheetState extends State<RevenueBreakdownSheet> {
                                 fontSize: 13,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12),
                             Text(
                               "₱${item.sales.toStringAsFixed(2)} sales",
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
                               ),

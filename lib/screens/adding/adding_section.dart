@@ -471,11 +471,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                           TextField(
                             controller: nameController,
                             textCapitalization: TextCapitalization.characters,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                RegExp(r'[A-Z\s]'),
-                              ),
-                            ],
+
                             onChanged: (value) {
                               nameController.value = TextEditingValue(
                                 text: value.toUpperCase(),
