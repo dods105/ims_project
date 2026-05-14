@@ -106,12 +106,13 @@ class DatabaseHelper {
 
     await db.execute('''
       CREATE TABLE transaction_items (
-        id INTEGER PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         transaction_id TEXT NOT NULL,
         products_id INTEGER NOT NULL,
         product_name TEXT NOT NULL,
         barcode TEXT,
         unit_price REAL NOT NULL,
+        original_price REAL,
         quantity INTEGER NOT NULL,
         subtotal REAL NOT NULL,
         FOREIGN KEY (transaction_id) REFERENCES transactions(id),
@@ -601,6 +602,32 @@ class DatabaseHelper {
       whereArgs: [transactionId],
     );
     return result.map((item) => TransactionItems.fromMap(item)).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> getTransactionItemsByUser(
+    int userId,
+  ) async {
+    final db = await instance.database;
+    return await db.rawQuery(
+      '''
+      SELECT
+        ti.id,
+        ti.transaction_id,
+        ti.products_id,
+        ti.product_name,
+        ti.barcode,
+        ti.unit_price,
+        ti.original_price,
+        ti.quantity,
+        ti.subtotal,
+        t.transacted_at
+      FROM transaction_items ti
+      JOIN transactions t ON ti.transaction_id = t.id
+      WHERE t.user_id = ?
+      ORDER BY t.transacted_at DESC
+      ''',
+      [userId],
+    );
   }
 
   Future<TransactionSale?> getTransactionById(String transactionId) async {

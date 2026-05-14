@@ -7,6 +7,7 @@ class TransactionItems {
   final String name;
   final String? barcode;
   final double unitPrice;
+  final double? originalPrice;
   final int quantity;
   final double subtotal;
 
@@ -17,9 +18,15 @@ class TransactionItems {
     required this.name,
     this.barcode,
     required this.unitPrice,
+    this.originalPrice,
     required this.quantity,
     required this.subtotal,
   });
+
+  double? get revenue {
+    if (originalPrice == null) return null;
+    return (unitPrice - originalPrice!) * quantity;
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -29,6 +36,7 @@ class TransactionItems {
       'product_name': name,
       'barcode': barcode,
       'unit_price': unitPrice,
+      'original_price': originalPrice,
       'quantity': quantity,
       'subtotal': subtotal,
     };
@@ -41,9 +49,12 @@ class TransactionItems {
       productsId: map['products_id'],
       name: map['product_name'],
       barcode: map['barcode'],
-      unitPrice: map['unit_price'],
+      unitPrice: (map['unit_price'] as num).toDouble(),
+      originalPrice: map['original_price'] != null
+          ? (map['original_price'] as num).toDouble()
+          : null,
       quantity: map['quantity'],
-      subtotal: map['subtotal'],
+      subtotal: (map['subtotal'] as num).toDouble(),
     );
   }
 }

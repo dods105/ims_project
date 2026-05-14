@@ -86,7 +86,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
       );
       return;
     }
-    if (originalprice.text.isEmpty) {
+    /*if (originalprice.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Enter Original Price"),
@@ -96,7 +96,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
         ),
       );
       return;
-    }
+    }*/
 
     if (srpController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -125,6 +125,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
       if (existingBarcodeProduct != null && mounted) {
         final existingName = existingBarcodeProduct.name;
         final newName = nameController.text.trim();
+        bool close = false;
 
         if (existingName != newName) {
           final keep = await showDialog<bool>(
@@ -137,7 +138,10 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                 ),
                 actions: [
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
+                    onPressed: () {
+                      Navigator.of(context).pop(false);
+                      close = true;
+                    },
                     child: Text('Close'),
                   ),
                   TextButton(
@@ -155,6 +159,10 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
               );
             },
           );
+
+          if (close == true) {
+            return;
+          }
 
           if (keep == false) {
             nameController.text = existingName;

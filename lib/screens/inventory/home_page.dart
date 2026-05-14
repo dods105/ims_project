@@ -384,8 +384,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     style: AppTheme.bodyMedium,
                   ),
                 ),
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
+                InkWell(
                   onTap: () {
                     PopupMenuButton(
                       color: cs.outlineVariant,
@@ -416,7 +415,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       ],
                     );
                   },
-                  child: const Padding(
+                  child: Padding(
                     padding: EdgeInsets.all(4),
                     child: Icon(Icons.more_vert, size: 18),
                   ),

@@ -120,12 +120,14 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
       await db.insertTransaction(transaction);
 
       for (final item in purchaseState.items.values) {
+        // original price snapshot at the moment of sale
         final transactionItem = TransactionItems(
           transactionId: transactionId!,
           productsId: item.product.id!,
           name: item.product.name,
           barcode: item.product.barcode,
           unitPrice: item.product.sellingPrice,
+          originalPrice: item.product.originalPrice, // snapshot
           quantity: item.quantity,
           subtotal: item.subtotal,
         );
