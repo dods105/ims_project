@@ -7,6 +7,8 @@ import '../models/products/products.dart';
 import 'package:intl/intl.dart';
 import '../models/products/expired_product.dart';
 import '../models/notifications/notification_model.dart';
+import '../models/purchase/transaction_sale.dart';
+import '../models/purchase/transaction_items.dart';
 
 class DatabaseHelper {
   //all about database
@@ -43,7 +45,7 @@ class DatabaseHelper {
       CREATE TABLE products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
-        name TEXT NOT NULL UNIQUE,
+        name TEXT NOT NULL,
         quantity INTEGER NOT NULL DEFAULT 0,
         selling_price REAL NOT NULL,
         original_price REAL,
@@ -191,14 +193,6 @@ class DatabaseHelper {
     return User(id: id, username: '', password: hashedPassword);
   }
 
-  // all about products
-
-  //creates a new product
-  //problem: now logic that says if the product name already exists,
-  //it will just create a new product with the same name.
-  //We need to add logic that checks if the product name already exists for the user,
-  //if it does, we update the quantity and selling price instead of creating a new product.
-
   // for adding prod only (Adding page)
   Future<void> insertOrUpdateProduct(Product product) async {
     final db = await instance.database;
@@ -242,7 +236,6 @@ class DatabaseHelper {
     }
   }
 
-  // for editing a product info ?????????????
   Future<Product?> getExistingProduct(Product product) async {
     final db = await instance.database;
     List<Map<String, dynamic>> existing;
@@ -291,10 +284,6 @@ class DatabaseHelper {
     return await db.delete('products', where: 'id = ?', whereArgs: [id]);
   }
 
-  //to implement:
-  //update product, get product by user id, get product by product id
-  // logic for the multiple expiry date of the same product name is to
-  //just create a new product with the same name but different expiry date?????
   Future<int> updateProduct(Product product) async {
     final db = await instance.database;
     return await db.update(
@@ -468,6 +457,78 @@ class DatabaseHelper {
         });
       }
     }
+
+    // Check for low stock and out of stock products
+    final allProducts = await db.query(
+      'products',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+    );
+
+    for (final p in allProducts) {
+      final quantity = p['quantity'] as int;
+      final productName = p['name'] as String;
+
+      if (quantity == 0) {
+        // Out of stock notification
+        final alreadyNotified = await db.query(
+          'notifications',
+          where:
+              "user_id = ? AND product_id = ? AND type = 'outOfStock' AND is_read = 0",
+          whereArgs: [userId, p['id']],
+        );
+        if (alreadyNotified.isEmpty) {
+          await db.insert('notifications', {
+            'user_id': userId,
+            'product_id': p['id'],
+            'product_name': productName,
+            'quantity': quantity,
+            'expiry_date': '',
+            'type': 'outOfStock',
+            'is_read': 0,
+            'created_at': now,
+          });
+        }
+      } else if (quantity <= 5) {
+        // Low stock notification
+        final alreadyNotified = await db.query(
+          'notifications',
+          where:
+              "user_id = ? AND product_id = ? AND type = 'lowStock' AND is_read = 0",
+          whereArgs: [userId, p['id']],
+        );
+        if (alreadyNotified.isEmpty) {
+          await db.insert('notifications', {
+            'user_id': userId,
+            'product_id': p['id'],
+            'product_name': productName,
+            'quantity': quantity,
+            'expiry_date': '',
+            'type': 'lowStock',
+            'is_read': 0,
+            'created_at': now,
+          });
+        }
+      }
+    }
+  }
+
+  Future<int> getItemCount(String transId) async {
+    try {
+      final db = await instance.database;
+      final result = await db.rawQuery(
+        '''
+    SELECT COUNT(*) as count 
+    FROM transaction_items
+    WHERE transaction_id = ?
+    ''',
+        [transId],
+      );
+      return Sqflite.firstIntValue(result) ?? 0;
+    } catch (e) {
+      print('Error in getItemCount for transaction $transId: $e');
+      return 0;
+    }
   }
 
   // ALL ABOUT TRANSACTIONS
@@ -503,6 +564,93 @@ class DatabaseHelper {
     final int count = await getTransactionCount(db, userId, now);
     final String sequence = (count + 1).toString().padLeft(3, '0');
 
-    return '$date[2]$date[3]-$hour12-$letter$period-$sequence';
+    return '$date-$hour12-$letter$period-$sequence';
+  }
+
+  // Transaction operations
+  Future<int> insertTransaction(TransactionSale transaction) async {
+    final db = await instance.database;
+    return await db.insert('transactions', transaction.toMap());
+  }
+
+  Future<int> insertTransactionItem(TransactionItems item) async {
+    final db = await instance.database;
+    return await db.insert('transaction_items', item.toMap());
+  }
+
+  Future<List<TransactionSale>> getTransactionsByUser(int userId) async {
+    final db = await instance.database;
+    final result = await db.query(
+      'transactions',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      orderBy: 'transacted_at DESC',
+    );
+    return result
+        .map((transaction) => TransactionSale.fromMap(transaction))
+        .toList();
+  }
+
+  Future<List<TransactionItems>> getTransactionItems(
+    String transactionId,
+  ) async {
+    final db = await instance.database;
+    final result = await db.query(
+      'transaction_items',
+      where: 'transaction_id = ?',
+      whereArgs: [transactionId],
+    );
+    return result.map((item) => TransactionItems.fromMap(item)).toList();
+  }
+
+  Future<TransactionSale?> getTransactionById(String transactionId) async {
+    final db = await instance.database;
+    final result = await db.query(
+      'transactions',
+      where: 'id = ?',
+      whereArgs: [transactionId],
+    );
+
+    if (result.isNotEmpty) {
+      return TransactionSale.fromMap(result.first);
+    }
+    return null;
+  }
+
+  // For receipt data - get complete transaction with items
+  Future<Map<String, dynamic>?> getCompleteTransaction(
+    String transactionId,
+  ) async {
+    final transaction = await getTransactionById(transactionId);
+    if (transaction == null) return null;
+
+    final items = await getTransactionItems(transactionId);
+
+    return {'transaction': transaction, 'items': items};
+  }
+
+  Future<List<TransactionSale>> getTransactionByDate(String date) async {
+    final db = await instance.database;
+    final result = await db.query(
+      'transactions',
+      where: 'transacted_at = ?',
+      whereArgs: [date],
+    );
+
+    return result.map((item) => TransactionSale.fromMap(item)).toList();
+  }
+
+  Future<Product?> getProductByBarcode(int userId, String barcode) async {
+    final db = await instance.database;
+    final result = await db.query(
+      'products',
+      where: 'user_id = ? AND barcode = ?',
+      whereArgs: [userId, barcode],
+    );
+
+    if (result.isNotEmpty) {
+      return Product.fromMap(result.first);
+    }
+    return null;
   }
 }

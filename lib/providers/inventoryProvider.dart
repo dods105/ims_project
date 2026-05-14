@@ -22,7 +22,11 @@ class InventoryState {
 
   List<AppNotification> get expiringSoon =>
       notifications.where((n) => n.type == NotifType.expiringSoon).toList();
-
+  List<AppNotification> get lowStockNotifications => notifications
+      .where(
+        (n) => n.type == NotifType.lowStock || n.type == NotifType.outOfStock,
+      )
+      .toList();
   int get unreadCount => notifications.where((n) => !n.isRead).length;
 
   InventoryState copyWith({
@@ -73,6 +77,22 @@ class InventoryNotifier extends AsyncNotifier<InventoryState> {
 
   Future<Product?> getExistingProduct(Product product) async {
     return await _db.getExistingProduct(product);
+  }
+
+  Future<Product?> getProductByBarcode(int userId, String barcode) async {
+    return _db.getProductByBarcode(userId, barcode);
+  }
+
+  Future<List<Product>> searchProduct(int userId, String query) async {
+    final products = await _db.getProductsByUser(userId);
+
+    if (query.isEmpty) return products;
+
+    final lowQuery = query.toLowerCase();
+    return products.where((product) {
+      return product.name.toLowerCase().contains(lowQuery) ||
+          (product.barcode?.toLowerCase().contains(lowQuery) ?? false);
+    }).toList();
   }
 
   Future<void> addProduct(Product product) async {

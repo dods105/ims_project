@@ -1,0 +1,34 @@
+NOTIFICATION
+- notify when stocks are low, stocks <= 5 and no stocks
+
+
+HISTORY
+- get the daily earning of the week of the chosen date and display it on the bar chart
+- get the weekly earning of the month of the chosen date and display it on the bar chart
+- total the weekly earning of the month of the chosen date and display it
+
+ALL
+- implement a working searchbar for inventory and purchase. used for both name and barcode
+- Do this last:
+    remove dead code and codes that are there but not in used.
+    follow the AppTheme class for design (fonts, and colors). make sure everything is unform and is used in every page. remove app theme variables or functions not in use in themes.dart. clean it and make sure only those used are left
+
+ADDING
+- make sure if barcode number exist when adding a product, look through the products table to see the name of the existing product and compare it to the product name entered by the user, notify user the product name is different. ask user t keep or change name
+
+inventory
+- when the 3 dot button is tapped you can choose to delete or edit the product
+- edit: put up the form same with the Adding Form to make user be able to change the product details
+- implement a sorting (a-z, high-low, near-far) -> alphabetical, stocks, expiry date, or group by product type (sort: alphabetical)
+
+
+
+
+
+
+Comments
+- Log in
+
+to add:
+- adding
+- inventory

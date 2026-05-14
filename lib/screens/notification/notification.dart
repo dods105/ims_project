@@ -5,7 +5,6 @@ import '../../designs/drawer.dart';
 import '../../designs/themes.dart';
 import '../../designs/appbar.dart';
 import '../../models/products/expired_product.dart';
-import '../../providers/display_provider.dart';
 import '../../providers/inventoryProvider.dart';
 
 class NotificationPage extends ConsumerWidget {
@@ -13,53 +12,49 @@ class NotificationPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final display = ref.watch(displaySettingsProvider);
-    final cs = Theme.of(context).colorScheme;
     final inventoryAsync = ref.watch(inventoryProvider);
+    final cs = Theme.of(context).colorScheme;
 
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBarDesign(page: 'Notification'),
         endDrawer: const AppDrawer(page: '/notification'),
         body: Column(
           children: [
             Material(
-              color: cs.secondaryContainer,
+              color: cs.primary,
               child: TabBar(
-                tabs: [
-                  Tab(
-                    child: Text(
-                      'Today',
-                      style: TextStyle(color: cs.surfaceVariant),
-                    ),
-                  ),
-                  Tab(
-                    child: Text(
-                      'All',
-                      style: TextStyle(color: cs.surfaceVariant),
-                    ),
-                  ),
-                  Tab(
-                    child: Text(
-                      'Expired Products',
-                      style: TextStyle(color: cs.surfaceVariant),
-                    ),
-                  ),
+                labelColor: AppTheme.white,
+                unselectedLabelColor: AppTheme.white.withOpacity(0.6),
+                indicatorColor: AppTheme.white,
+                tabs: const [
+                  Tab(text: 'Expiring Soon'),
+                  Tab(text: 'Low Stock'),
+                  Tab(text: 'All'),
+                  Tab(text: 'Expired'),
                 ],
               ),
             ),
             Expanded(
               child: inventoryAsync.when(
-                loading: () => Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, st) =>
-                    Center(child: Text('Error loading notifications')),
+                    const Center(child: Text('Error loading notifications')),
                 data: (state) => TabBarView(
                   children: [
-                    // Today's notifications
+                    // Expiring Soon
                     NotifList(
                       notifications: state.expiringSoon,
-                      emptyMessage: 'No Notifications.',
+                      emptyMessage: 'No expiring products.',
+                      onDelete: (id) => ref
+                          .read(inventoryProvider.notifier)
+                          .deleteNotification(id),
+                    ),
+                    // Low Stock / Out of Stock
+                    NotifList(
+                      notifications: state.lowStockNotifications,
+                      emptyMessage: 'All products are sufficiently stocked.',
                       onDelete: (id) => ref
                           .read(inventoryProvider.notifier)
                           .deleteNotification(id),
@@ -72,7 +67,7 @@ class NotificationPage extends ConsumerWidget {
                           .read(inventoryProvider.notifier)
                           .deleteNotification(id),
                     ),
-                    // Expired products notifications
+                    // Expired products
                     ExpiredList(
                       expiredProducts: state.expiredProducts,
                       onDelete: (id) => ref
@@ -89,6 +84,8 @@ class NotificationPage extends ConsumerWidget {
     );
   }
 }
+
+// NotifList
 
 class NotifList extends StatelessWidget {
   final List<AppNotification> notifications;
@@ -108,6 +105,7 @@ class NotifList extends StatelessWidget {
       return Center(child: Text(emptyMessage));
     }
     return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: notifications.length,
       itemBuilder: (context, index) {
         final notif = notifications[index];
@@ -120,6 +118,8 @@ class NotifList extends StatelessWidget {
   }
 }
 
+// NotifCard
+
 class NotifCard extends StatelessWidget {
   final AppNotification notification;
   final VoidCallback onDelete;
@@ -130,56 +130,95 @@ class NotifCard extends StatelessWidget {
     required this.onDelete,
   });
 
+  // Icon + colour per notification type
+  IconData get _icon {
+    switch (notification.type) {
+      case NotifType.lowStock:
+        return Icons.inventory_2_outlined;
+      case NotifType.outOfStock:
+        return Icons.remove_shopping_cart_outlined;
+      case NotifType.expired:
+        return Icons.dangerous_outlined;
+      case NotifType.expiringSoon:
+        return Icons.hourglass_bottom_outlined;
+    }
+  }
+
+  Color get _accentColor {
+    switch (notification.type) {
+      case NotifType.lowStock:
+        return AppTheme.textOrange;
+      case NotifType.outOfStock:
+        return AppTheme.textRed;
+      case NotifType.expired:
+        return AppTheme.error;
+      case NotifType.expiringSoon:
+        return AppTheme.warning;
+    }
+  }
+
+  String get _title {
+    switch (notification.type) {
+      case NotifType.lowStock:
+        return 'Low Stock';
+      case NotifType.outOfStock:
+        return 'Out of Stock';
+      case NotifType.expired:
+        return 'Product Expired';
+      case NotifType.expiringSoon:
+        return 'Expiring Soon';
+    }
+  }
+
+  String get _body {
+    switch (notification.type) {
+      case NotifType.lowStock:
+        return '${notification.productName} is running low. Only ${notification.quantity} are left.';
+      case NotifType.outOfStock:
+        return '${notification.productName} is out of stock. Please restock.';
+      case NotifType.expired:
+        return '${notification.productName} expired on ${notification.expiryDate}.';
+      case NotifType.expiringSoon:
+        return '${notification.quantity} unit(s) of ${notification.productName} will expire on ${notification.expiryDate}.';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(15.0),
-        child: Column(
-          children: [
-            ListTile(
-              title: Wrap(
-                alignment: WrapAlignment.start,
-                children: [
-                  Text(
-                    notification.productName,
-                    style: TextStyle(
-                      color: cs.secondaryContainer,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 20,
-                    ),
-                  ),
-                  SizedBox(width: 20),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${notification.quantity} items are about to expire on',
-                        style: TextStyle(
-                          color: cs.onSurfaceVariant,
-                          fontWeight: FontWeight.w100,
-                          fontSize: 14,
-                        ),
-                      ),
-                      Text(
-                        '${notification.expiryDate} day(s).',
-                        style: TextStyle(
-                          color: cs.onSurfaceVariant,
-                          fontSize: 14,
-                          fontWeight: FontWeight(700),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              trailing: IconButton(
-                icon: Icon(Icons.delete_outline, color: Colors.red),
-                onPressed: () => _confirmDelete(context),
-              ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cs.outline),
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 10,
+          ),
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: _accentColor.withOpacity(0.12),
+              shape: BoxShape.circle,
             ),
-          ],
+            child: Icon(_icon, color: _accentColor, size: 22),
+          ),
+          title: Text(
+            _title,
+            style: AppTheme.titleSmall.copyWith(color: _accentColor),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(_body, style: AppTheme.bodySmall),
+          ),
+          trailing: IconButton(
+            icon: const Icon(Icons.delete_outline, color: AppTheme.textRed),
+            onPressed: () => _confirmDelete(context),
+          ),
         ),
       ),
     );
@@ -201,13 +240,18 @@ class NotifCard extends StatelessWidget {
               Navigator.pop(ctx);
               onDelete();
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: AppTheme.textRed),
+            ),
           ),
         ],
       ),
     );
   }
 }
+
+// ExpiredList
 
 class ExpiredList extends StatelessWidget {
   final List<ExpiredProduct> expiredProducts;
@@ -222,9 +266,15 @@ class ExpiredList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (expiredProducts.isEmpty) {
-      return Center(child: Text('No expired products.'));
+      return const Center(
+        child: Text(
+          'No expired products.',
+          style: TextStyle(color: AppTheme.textMuted),
+        ),
+      );
     }
     return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: expiredProducts.length,
       itemBuilder: (context, index) {
         final product = expiredProducts[index];
@@ -237,6 +287,8 @@ class ExpiredList extends StatelessWidget {
   }
 }
 
+// ExpiredCard
+
 class ExpiredCard extends StatelessWidget {
   final ExpiredProduct product;
   final VoidCallback onDelete;
@@ -245,53 +297,47 @@ class ExpiredCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.all(15.0),
-      child: Column(
-        children: [
-          ListTile(
-            title: Wrap(
-              alignment: WrapAlignment.start,
-              children: [
-                Text(
-                  product.name,
-                  style: TextStyle(
-                    color: cs.secondaryContainer,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 20,
-                  ),
-                ),
-                SizedBox(width: 20),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${product.quantity} items have expired on',
-                      style: TextStyle(
-                        color: cs.onSurfaceVariant,
-                        fontWeight: FontWeight.w100,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      '${product.expiryDate}.',
-                      style: TextStyle(
-                        color: cs.onSurfaceVariant,
-                        fontSize: 14,
-                        fontWeight: FontWeight(700),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.borderDefault),
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 10,
+          ),
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppTheme.error.withOpacity(0.12),
+              shape: BoxShape.circle,
             ),
-            trailing: IconButton(
-              icon: Icon(Icons.delete_outline, color: Colors.red),
-              onPressed: () => _confirmDelete(context),
+            child: const Icon(
+              Icons.dangerous_outlined,
+              color: AppTheme.error,
+              size: 22,
             ),
           ),
-        ],
+          title: Text(
+            product.name,
+            style: AppTheme.titleSmall.copyWith(color: AppTheme.error),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              '${product.quantity} item(s) expired on ${product.expiryDate}.',
+              style: AppTheme.bodySmall,
+            ),
+          ),
+          trailing: IconButton(
+            icon: const Icon(Icons.delete_outline, color: AppTheme.textRed),
+            onPressed: () => _confirmDelete(context),
+          ),
+        ),
       ),
     );
   }
@@ -314,7 +360,10 @@ class ExpiredCard extends StatelessWidget {
               Navigator.pop(ctx);
               onDelete();
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: AppTheme.textRed),
+            ),
           ),
         ],
       ),

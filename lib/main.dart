@@ -31,14 +31,18 @@ class MainApp extends ConsumerWidget {
 
     return MaterialApp(
       themeMode: display.themeMode,
-      theme: AppTheme.lightTheme(
-        fontFamily: display.fontFamily,
-        fontScale: display.fontScale,
-      ),
-      darkTheme: AppTheme.darkTheme(
-        fontFamily: display.fontFamily,
-        fontScale: display.fontScale,
-      ),
+      theme: AppTheme.lightTheme(fontFamily: display.fontFamily),
+      darkTheme: AppTheme.darkTheme(fontFamily: display.fontFamily),
+      // Display font size scales all text; theme uses base sizes (scale 1.0 inside ThemeData).
+      builder: (context, child) {
+        final mq = MediaQuery.of(context);
+        return MediaQuery(
+          data: mq.copyWith(
+            textScaler: TextScaler.linear(display.fontScale),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: const AuthGate(),
       routes: {
         '/login': (context) => LoginSignupPage(),
@@ -46,7 +50,7 @@ class MainApp extends ConsumerWidget {
         '/settings': (context) => const SettingsPage(),
         '/adding': (context) => AddingSectionPage(),
         '/history': (context) => HistoryPage(),
-        '/purchase': (context) => purchase_section(),
+        '/purchase': (context) => PurchaseSection(),
         '/notification': (context) => NotificationPage(),
         '/logout': (context) => const AuthGate(),
         '/account': (context) => Account(),

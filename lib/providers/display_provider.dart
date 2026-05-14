@@ -9,7 +9,7 @@ class DisplaySettings {
 
   const DisplaySettings({
     this.themeMode = ThemeMode.light,
-    this.fontScale = 1.0,
+    this.fontScale = 0.88,
     this.fontFamily = 'Roboto',
   });
 
@@ -35,7 +35,7 @@ class DisplayNotifier extends AsyncNotifier<DisplaySettings> {
   Future<DisplaySettings> build() async {
     final prefs = await SharedPreferences.getInstance();
     final modeStr = prefs.getString(_kThemeMode) ?? 'light';
-    final scale = prefs.getDouble(_kFontScale) ?? 1.0;
+    final scale = prefs.getDouble(_kFontScale) ?? 0.88;
     final font = prefs.getString(_kFontFamily) ?? 'Roboto';
 
     return DisplaySettings(

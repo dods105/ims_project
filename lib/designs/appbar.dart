@@ -17,6 +17,7 @@ class AppBarDesign extends ConsumerWidget implements PreferredSizeWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider);
     final name = ref.watch(authProvider).value?.username ?? '';
+    final cs = Theme.of(context).colorScheme;
 
     return AppBar(
       title: Row(
@@ -32,10 +33,17 @@ class AppBarDesign extends ConsumerWidget implements PreferredSizeWidget {
           ),
           //store name
           const SizedBox(width: 8),
-          Text(name, style: AppTheme.bodyMedium),
-          Spacer(),
-          Text(page.toUpperCase(), style: AppTheme.displayMedium),
-          Spacer(),
+          Text(name, style: AppTheme.bodyMedium.copyWith(letterSpacing: 0.85)),
+          const Spacer(),
+          Text(
+            page.toUpperCase(),
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 25,
+              letterSpacing: 0.85,
+            ),
+          ),
+          const Spacer(),
         ],
       ),
 

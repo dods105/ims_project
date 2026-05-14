@@ -131,7 +131,7 @@ class AppTheme {
   static const TextStyle titleSmall = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w700,
-    letterSpacing: 1.0,
+    letterSpacing: 0.65,
     height: 1.4,
   );
   static const TextStyle bodyLarge = TextStyle(
@@ -149,8 +149,8 @@ class AppTheme {
   static const TextStyle bodySmall = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w400,
-    letterSpacing: 0.3,
-    height: 1.5,
+    letterSpacing: 0.25,
+    height: 1.45,
   );
 
   // drawerText dark blue bg white
@@ -164,14 +164,11 @@ class AppTheme {
   static TextStyle get pageTitleLight => displayMedium.copyWith(color: white);
   static TextStyle get pageTitleDark => displayMedium.copyWith(color: grey900);
   static TextStyle get subtitleLight =>
-      bodyMedium.copyWith(color: white.withOpacity(0.7));
+      bodyMedium.copyWith(color: white.withValues(alpha: 0.72));
 
-  //  LIGHT ThemeData
-  static ThemeData lightTheme({
-    String fontFamily = 'Roboto',
-    double fontScale = 1.0,
-  }) {
-    final base = _buildTextTheme(fontFamily, fontScale, Brightness.light);
+  //  LIGHT ThemeData — base sizes only; app font size is MediaQuery.textScaler (see main.dart).
+  static ThemeData lightTheme({String fontFamily = 'Roboto'}) {
+    final base = _buildTextTheme(fontFamily, 1.0, Brightness.light);
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
@@ -181,7 +178,7 @@ class AppTheme {
         onPrimary: white,
         primaryContainer: Color(0xFFDBEAFE),
         onPrimaryContainer: Color(0xFF1D4ED8),
-        secondary: brandBlueHover,
+        secondary: Color.fromARGB(255, 174, 191, 236),
         onSecondary: white,
         secondaryContainer: brandBlue,
         onSecondaryContainer: brandBlue,
@@ -241,11 +238,8 @@ class AppTheme {
   }
 
   //  DARK ThemeData
-  static ThemeData darkTheme({
-    String fontFamily = 'Roboto',
-    double fontScale = 1.0,
-  }) {
-    final base = _buildTextTheme(fontFamily, fontScale, Brightness.dark);
+  static ThemeData darkTheme({String fontFamily = 'Roboto'}) {
+    final base = _buildTextTheme(fontFamily, 1.0, Brightness.dark);
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -255,7 +249,7 @@ class AppTheme {
         onPrimary: white,
         primaryContainer: Color(0xFF1D4ED8),
         onPrimaryContainer: Color(0xFFDBEAFE),
-        secondary: Color(0xFF42A5F5),
+        secondary: Color.fromARGB(255, 181, 212, 237),
         onSecondary: white,
         secondaryContainer: nightBlue,
         onSecondaryContainer: Color(0xFFBFDBFE),
@@ -327,7 +321,7 @@ class AppTheme {
 
     TextStyle apply(TextStyle base) {
       final sized = base.copyWith(
-        fontSize: (base.fontSize ?? 14) * scale,
+        fontSize: (base.fontSize ?? 15) * scale,
         color: color,
       );
       try {

@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../designs/themes.dart';
 import '../../providers/display_provider.dart';
 
 //comment
 const _sizes = [
-  (label: 'Small', scale: 0.85, fontSize: 15.0),
-  (label: 'Medium', scale: 1.0, fontSize: 20.0),
-  (label: 'Large', scale: 1.2, fontSize: 34.0),
+  (label: 'Small', scale: 0.78, fontSize: 13.0),
+  (label: 'Medium', scale: 0.88, fontSize: 17.0),
+  (label: 'Large', scale: 1.02, fontSize: 26.0),
 ];
 
 class Display extends ConsumerWidget {
@@ -18,7 +17,6 @@ class Display extends ConsumerWidget {
     final display = ref.watch(displaySettingsProvider);
     final isDark = display.themeMode == ThemeMode.dark;
     final cs = Theme.of(context).colorScheme;
-    final fontScale = display.fontScale;
     final notifier = ref.read(displayProvider.notifier);
 
     return Scaffold(
@@ -42,17 +40,13 @@ class Display extends ConsumerWidget {
                     children: [
                       Text(
                         "Theme Mode",
-                        style: TextStyle(
-                          fontSize: 14 * fontScale,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       Text(
                         isDark ? 'Dark Mode' : 'Light Mode',
-                        style: TextStyle(
-                          fontSize: 12 * fontScale,
-                          fontWeight: FontWeight.w400,
-                        ),
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
                   ),
@@ -71,7 +65,7 @@ class Display extends ConsumerWidget {
             const SizedBox(height: 30),
 
             _FontSizeCard(
-              currentScale: fontScale,
+              currentScale: display.fontScale,
               onSelect: (newScale) => notifier.setFontScale(newScale),
             ),
           ],
@@ -90,66 +84,62 @@ class _FontSizeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final outerMq = MediaQuery.of(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: cs.outline,
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Font Size',
-            style: TextStyle(
-              fontSize: 14 * currentScale,
-              fontWeight: FontWeight.w600,
+    // Preview uses neutral text scale so the three "A" sizes stay comparable.
+    return MediaQuery(
+      data: outerMq.copyWith(textScaler: TextScaler.linear(1.0)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: cs.outline,
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Font Size',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: _sizes.map((s) {
-              final isSelected = (currentScale - s.scale).abs() < 0.05;
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: _sizes.map((s) {
+                // Treat legacy saved scale 1.0 as "Medium" (was old default).
+                final isSelected =
+                    (currentScale - s.scale).abs() < 0.05 ||
+                    (s.label == 'Medium' && (currentScale - 1.0).abs() < 0.02);
 
-              return InkWell(
-                onTap: () => onSelect(s.scale),
-                borderRadius: BorderRadius.circular(20),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 85,
-                  height: 85,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: isSelected ? cs.primary : cs.surface,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'A',
-                    style: TextStyle(
-                      fontSize: s.fontSize,
-                      fontWeight: FontWeight.w600,
-                      color: isSelected ? cs.onPrimary : cs.onSurface,
+                return InkWell(
+                  onTap: () => onSelect(s.scale),
+                  borderRadius: BorderRadius.circular(20),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 85,
+                    height: 85,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: isSelected ? cs.primary : cs.surface,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'A',
+                      style: TextStyle(
+                        fontSize: s.fontSize,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected ? cs.onPrimary : cs.onSurface,
+                      ),
                     ),
                   ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 20),
-          Slider(
-            value: currentScale,
-
-            min: 0.85,
-            max: 1.2,
-
-            divisions: 2,
-            onChanged: (value) {
-              onSelect(value);
-            },
-          ),
-        ],
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }

@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';

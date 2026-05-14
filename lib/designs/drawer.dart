@@ -7,9 +7,15 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final isShortScreen = screenHeight < 600;
+
+    final double avatarRadius = isShortScreen ? 36 : 60;
+    final double headerVerticalPadding = isShortScreen ? 14 : 30;
+
     return Drawer(
       width: MediaQuery.sizeOf(context).width * 0.65,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(60),
           bottomLeft: Radius.circular(60),
@@ -21,37 +27,49 @@ class AppDrawer extends StatelessWidget {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 30),
+                padding: EdgeInsets.symmetric(vertical: headerVerticalPadding),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     CircleAvatar(
                       backgroundImage: const AssetImage(
                         'assets/images/godzilla.gif',
                       ),
-                      radius: 60,
-                      backgroundColor: AppTheme.primaryBlue.withOpacity(0.2),
+                      radius: avatarRadius,
+                      backgroundColor: AppTheme.primaryBlue.withValues(
+                        alpha: 0.2,
+                      ),
                     ),
                     const SizedBox(height: 14),
-                    Text(
-                      'INVENZILLA',
-                      style: AppTheme.pageTitleLight.copyWith(
-                        fontSize: 20,
-                        letterSpacing: 3,
+                    // FittedBox prevents title from overflowing on narrow drawers
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'INVENZILLA',
+                        style: AppTheme.titleLarge.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      'inventory manager',
-                      style: AppTheme.subtitleLight.copyWith(
-                        fontSize: 11,
-                        letterSpacing: 1.5,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'inventory manager',
+                        style: AppTheme.bodySmall.copyWith(
+                          color: Colors.white.withValues(alpha: 0.88),
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
+
               Divider(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
                 indent: 24,
                 endIndent: 24,
               ),
@@ -87,20 +105,22 @@ class AppDrawer extends StatelessWidget {
                     ),
                     _NavItem(
                       icon: Icons.notifications,
-                      label: "NOTIFICATION",
+                      label: 'NOTIFICATION',
                       route: '/notification',
                       page: page,
                     ),
                   ],
                 ),
               ),
+
               _NavItem(
                 icon: Icons.settings_rounded,
                 label: 'SETTINGS',
                 route: '/settings',
                 page: page,
               ),
-              const SizedBox(height: 40),
+
+              SizedBox(height: isShortScreen ? 16 : 40),
             ],
           ),
         ),
@@ -124,13 +144,15 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    //final currentRoute = ModalRoute.of(context)?.settings.name ?? '';
-    //print(currentRoute);
     final bool active = page == route;
 
     return Padding(
       padding: const EdgeInsets.only(left: 25, top: 4, bottom: 4),
       child: InkWell(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(10),
+          bottomLeft: Radius.circular(10),
+        ),
         onTap: () {
           if (route == '/settings') {
             Navigator.pushNamed(context, route);
@@ -139,7 +161,8 @@ class _NavItem extends StatelessWidget {
           }
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+          // Use horizontal padding that won't overflow on narrow drawers
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             gradient: active
                 ? AppTheme.drawerHighlight.withOpacity(0.7)
@@ -151,9 +174,17 @@ class _NavItem extends StatelessWidget {
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
+
             children: [
-              Text(label, style: AppTheme.drawerText),
-              const SizedBox(width: 14),
+              Flexible(
+                child: Text(
+                  label,
+                  style: AppTheme.drawerText,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
+              const SizedBox(width: 10),
               Icon(icon, size: 22, color: AppTheme.grey300),
               const SizedBox(width: 4),
             ],

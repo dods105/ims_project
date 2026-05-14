@@ -9,7 +9,7 @@ import 'package:image_picker/image_picker.dart'; // Add new logic function
 import 'dart:io';
 import '../../designs/themes.dart';
 import '../../providers/inventoryProvider.dart';
-import 'barcode_scanner_page.dart';
+import '../../designs/barcode_scanner_page.dart';
 import 'package:flutter/services.dart';
 
 class AddingSectionPage extends ConsumerStatefulWidget {
@@ -23,13 +23,14 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
   final TextEditingController barcodeController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController expiryController = TextEditingController();
-  bool isProductTypeCustom = false;
   final TextEditingController nameController = TextEditingController();
   final TextEditingController originalprice = TextEditingController();
   final TextEditingController prodcuttypeController = TextEditingController();
-  String? productType;
   final TextEditingController qtyCtrl = TextEditingController();
   final TextEditingController srpController = TextEditingController();
+
+  String? productType;
+  bool isProductTypeCustom = false;
   final List<String> types = [
     "DRINKS",
     "FROZEN FOODS",
@@ -57,7 +58,12 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
     super.dispose();
   }
 
+  // triggred when add button is clicked
+
   Future<void> savedproduct(int userId) async {
+    /* cheks if this have the required fields:
+   * name, quantity, original price and selling price
+   */
     if (nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -104,7 +110,60 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
       return;
     }
 
-    final product = Product(
+    /**
+     * Checks if barcode number exist in the database
+     * if it exists, check for the product name in the database and check the product name input
+     * compare if same. if it is prompt user to either:
+     *  - Change the existing product name to new one or keep the old one or close the promt
+     */
+    final barcode = barcodeController.text.trim();
+    if (barcode.isNotEmpty) {
+      final existingBarcodeProduct = await ref
+          .read(inventoryProvider.notifier)
+          .getProductByBarcode(userId, barcode);
+
+      if (existingBarcodeProduct != null && mounted) {
+        final existingName = existingBarcodeProduct.name;
+        final newName = nameController.text.trim();
+
+        if (existingName != newName) {
+          final keep = await showDialog<bool>(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: Text('Product Name Mismatch'),
+                content: Text(
+                  'Barcode $barcode is already usesd by product "$existingName"\n\nYou entered "$newName". Do you want to keep the existing name or change it?',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text('Close'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text('Keep Existing Name'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.brandBlue,
+                    ),
+                    child: Text('Change Product Name'),
+                  ),
+                ],
+              );
+            },
+          );
+
+          if (keep == false) {
+            nameController.text = existingName;
+          }
+        }
+      }
+    }
+
+    var product = Product(
       userId: userId,
       name: nameController.text.trim(),
       quantity: int.tryParse(qtyCtrl.text) ?? 0,
@@ -121,6 +180,13 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
       imagePath: _imagePath,
     );
 
+    /**
+     * Checks if product already exist in the database
+     * if it exists, update the quantity -> old quatity + new quantity
+     * if price change is detected (original or selling price):
+     * - ask to update the rest of the product price saved in the databaase
+     * - close the prompt, keepp old price, update price
+     */
     final duplicateProduct = await ref
         .read(inventoryProvider.notifier)
         .getExistingProduct(product);
@@ -148,12 +214,21 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
                   child: const Text(
-                    'No, Cancel',
+                    'Close',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(true);
+                  },
+                  child: const Text(
+                    'No, Keep Old Price',
                     style: TextStyle(color: Colors.grey),
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(true),
+                  onPressed: () => Navigator.of(context).pop(false),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.brandBlue,
                   ),
@@ -167,12 +242,25 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
           },
         );
 
-        if (confirm != true) {
-          return;
+        if (confirm == true) {
+          // User chose not to update price, add product with original price
+          product = Product(
+            userId: product.userId,
+            name: product.name,
+            quantity: product.quantity,
+            sellingPrice: sellingPrice,
+            originalPrice: originalPrice,
+            productType: product.productType,
+            expiryDate: product.expiryDate,
+            barcode: product.barcode,
+            description: product.description,
+            imagePath: product.imagePath,
+          );
         }
       }
     }
 
+    // ad or update product to the database
     await ref.read(inventoryProvider.notifier).addProduct(product);
 
     if (mounted) {
@@ -205,6 +293,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
     });
   }
 
+  // image choices
   void _showActionDialog() {
     showDialog(
       context: context,
@@ -248,6 +337,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
     );
   }
 
+  // expiration date selection
   Future<void> _selectDate() async {
     DateTime? picked = await showDatePicker(
       context: context,
@@ -293,8 +383,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 padding: EdgeInsets.zero,
-                                elevation:
-                                    0, // remove default shadow if you want flat look
+                                elevation: 0,
                                 backgroundColor: const Color.from(
                                   alpha: 0,
                                   red: 0,
@@ -416,6 +505,8 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                   ],
                 ),
                 SizedBox(height: 20),
+
+                // barcode input
                 TextField(
                   controller: barcodeController,
                   decoration: InputDecoration(
@@ -488,6 +579,8 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                   ],
                 ),
                 SizedBox(height: 5),
+
+                // original price
                 Row(
                   children: [
                     // First TextField
@@ -540,6 +633,8 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                     SizedBox(width: screenWidth / 2 - 50, child: Text('SRP')),
                   ],
                 ),
+
+                // srp
                 Row(
                   children: [
                     // First TextField
@@ -578,12 +673,16 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                   ],
                 ),
                 SizedBox(height: 15),
+
+                // product type selection
+                Text('TYPE'),
+                SizedBox(height: 5),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     DropdownMenu<String>(
                       width: double.infinity,
-                      initialSelection: productType ?? types.first,
+                      // initialSelection: productType ?? types.first,
                       enableFilter: true,
                       requestFocusOnTap: false,
                       onSelected: (String? newValue) {
@@ -648,6 +747,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                 ),
                 SizedBox(height: 20),
 
+                // add button
                 Row(
                   children: [
                     Expanded(

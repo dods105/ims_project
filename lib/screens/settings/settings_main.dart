@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../designs/themes.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/display_provider.dart';
 import 'package:flutter_application_1/services/auth_gate.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -11,8 +10,6 @@ class SettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(authProvider);
-    final display = ref.watch(displaySettingsProvider);
-    final s = display.fontScale;
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
@@ -23,7 +20,13 @@ class SettingsPage extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('SETTINGS', style: AppTheme.displayMedium),
+        title: Text(
+          'SETTINGS',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
+          ),
+        ),
       ),
 
       body: ListView(
@@ -33,35 +36,18 @@ class SettingsPage extends ConsumerWidget {
             icon: Icons.smartphone_rounded,
             label: 'MY ACCOUNT',
             route: '/account',
-            fontScale: s,
           ),
           const SizedBox(height: 12),
           _SettingsItem(
             icon: Icons.brightness_6_rounded,
             label: 'DISPLAY',
             route: '/display',
-            fontScale: s,
-          ),
-          const SizedBox(height: 12),
-          _SettingsItem(
-            icon: Icons.translate_rounded,
-            label: 'LANGUAGE',
-            route: '/language',
-            fontScale: s,
-          ),
-          const SizedBox(height: 12),
-          _SettingsItem(
-            icon: Icons.volume_up_rounded,
-            label: 'SOUND',
-            route: '/sound',
-            fontScale: s,
           ),
           const SizedBox(height: 12),
           _SettingsItem(
             icon: Icons.menu_book_rounded,
             label: 'MANUAL',
             route: '/manual',
-            fontScale: s,
           ),
 
           const SizedBox(height: 48),
@@ -91,10 +77,10 @@ class SettingsPage extends ConsumerWidget {
                 },
                 child: Text(
                   'LOGOUT',
-                  style: TextStyle(
-                    fontSize: 15 * s,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.5,
+                    color: AppTheme.white,
                   ),
                 ),
               ),
@@ -110,13 +96,11 @@ class _SettingsItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final String route;
-  final double fontScale;
 
   const _SettingsItem({
     required this.icon,
     required this.label,
     required this.route,
-    required this.fontScale,
   });
 
   @override
@@ -149,8 +133,7 @@ class _SettingsItem extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 14 * fontScale,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppTheme.nightBlue,
                     letterSpacing: 0.5,

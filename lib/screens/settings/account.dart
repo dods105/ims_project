@@ -70,8 +70,7 @@ class Account extends ConsumerWidget {
                 children: [
                   Text(
                     username.toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 22,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),

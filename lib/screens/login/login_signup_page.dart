@@ -28,13 +28,22 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
     super.dispose();
   }
 
+  /* 
+  saves user information to the database
+  and retrieves user info from the database
+   */
   Future<void> _handleSubmit() async {
     final username = _usernameController.text.trim();
     final password = _passwordController.text;
 
+    // is the username empty?
     String? usernameError = validateUsername(username);
+
+    //is the password empty? or is it less than 6 in length?
     String? passwordError = validatePassword(password);
 
+    // if username or password condtions are not satisfied,
+    // display error and do not sign up/ log in
     if (usernameError != null || passwordError != null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -48,6 +57,13 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
     }
 
     if (isLoginMode) {
+      /*
+      if user clicks log in
+      verify if username and password exist in the Db
+      proceed to log the user
+
+      if not, displaye error
+     */
       final user = await DatabaseHelper.instance.checkUser(username, password);
       if (user != null) {
         if (mounted) await ref.read(authProvider.notifier).login(user);
@@ -62,8 +78,12 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
         }
       }
     } else {
+      /*
+        Sign in
+       */
       final exists = await DatabaseHelper.instance.usernameExists(username);
       if (exists) {
+        /**if name exist tell the user, and do not proceed with account creation */
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -73,6 +93,9 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
           );
         }
       } else {
+        /**
+         * username does not exist in the databse yet, proceed to create an account
+         */
         final newUser = User(username: username, password: password);
         final createdUser = await DatabaseHelper.instance.createUser(newUser);
         if (mounted) {
@@ -118,7 +141,7 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // App Logo
+              // User Profile
               CircleAvatar(
                 radius: 80,
                 backgroundColor: Colors.deepPurpleAccent,
@@ -138,6 +161,7 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
               ),
               const SizedBox(height: 20),
 
+              // username textfield
               Center(
                 child: SizedBox(
                   width: 250,
@@ -162,6 +186,7 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
               ),
               const SizedBox(height: 15),
 
+              // password textfield
               Center(
                 child: SizedBox(
                   width: 250,
@@ -199,6 +224,7 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
               ),
               const SizedBox(height: 15),
 
+              // button -> log in or sign up
               Center(
                 child: SizedBox(
                   width: 100,
@@ -214,14 +240,15 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
                     ),
                     child: Text(
                       isLoginMode ? 'Login' : 'Sign Up',
-                      style: const TextStyle(
-                        fontSize: 18,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
               ),
+              // switch between log in and sign up
               TextButton(
                 onPressed: _toggleMode,
                 style: TextButton.styleFrom(minimumSize: const Size(100, 40)),
@@ -229,7 +256,9 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
                   isLoginMode
                       ? "Don't have an account? Sign Up"
                       : 'Already have an account? Login',
-                  style: TextStyle(fontSize: 16, color: AppTheme.primaryBlue),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppTheme.primaryBlue),
                 ),
               ),
             ],

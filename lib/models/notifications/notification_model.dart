@@ -1,4 +1,4 @@
-enum NotifType { expiringSoon, expired }
+enum NotifType { expiringSoon, expired, lowStock, outOfStock }
 
 class AppNotification {
   final int? id;
@@ -31,6 +31,7 @@ class AppNotification {
       'product_name': productName,
       'quantity': quantity,
       'expiry_date': expiryDate,
+      'type': _typeToString(type),
       'is_read': isRead ? 1 : 0,
       'created_at': createdAt,
     };
@@ -44,11 +45,35 @@ class AppNotification {
       productName: map['product_name'],
       quantity: map['quantity'],
       expiryDate: map['expiry_date'],
-      type: map['type'] == 'expired'
-          ? NotifType.expired
-          : NotifType.expiringSoon,
+      type: _typeFromString(map['type']),
       isRead: map['is_read'] == 1,
       createdAt: map['created_at'] ?? '',
     );
+  }
+
+  static String _typeToString(NotifType t) {
+    switch (t) {
+      case NotifType.expired:
+        return 'expired';
+      case NotifType.expiringSoon:
+        return 'expiringSoon';
+      case NotifType.lowStock:
+        return 'lowStock';
+      case NotifType.outOfStock:
+        return 'outOfStock';
+    }
+  }
+
+  static NotifType _typeFromString(String? s) {
+    switch (s) {
+      case 'expired':
+        return NotifType.expired;
+      case 'lowStock':
+        return NotifType.lowStock;
+      case 'outOfStock':
+        return NotifType.outOfStock;
+      default:
+        return NotifType.expiringSoon;
+    }
   }
 }
