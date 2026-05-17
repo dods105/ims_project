@@ -184,12 +184,7 @@ class NotificationPage extends ConsumerWidget {
                           context: context,
                           ref: ref,
                           id: id,
-                          // Always use the real type from the notification row.
-                          // The NotifList widget passes notif.type, so 'type'
-                          // will never be null here — but if it somehow is,
-                          // fall back to a safe non-cascade type so we don't
-                          // accidentally trigger an expired/outOfStock cascade.
-                          type: type ?? NotifType.lowStock,
+                          type: type ?? NotifType.expiringSoon,
                         ),
                       ),
 

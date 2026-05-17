@@ -81,12 +81,12 @@ class ShowReceiptBottomSheet {
                           if (customerName != null &&
                               customerName.isNotEmpty) ...[
                             SizedBox(height: 8),
-                            _buildDetailRow('Customer', customerName),
+                            _buildDetailRow('Customer Name', customerName),
                           ],
                           if (customerAddress != null &&
                               customerAddress.isNotEmpty) ...[
                             SizedBox(height: 8),
-                            _buildDetailRow('Customer', customerAddress),
+                            _buildDetailRow('Customer Adress', customerAddress),
                           ],
                         ],
                       ),

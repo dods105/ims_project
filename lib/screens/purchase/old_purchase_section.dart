@@ -61,14 +61,9 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
   }
 
   void _onQtyTextChanged(Product product, String raw) {
-    // Empty field: don't update the cart yet — the user is mid-type.
-    // onEditingComplete (below) will reset to 1 if they leave it blank.
     if (raw.isEmpty) return;
-
     final parsed = int.tryParse(raw);
     if (parsed == null) return;
-
-    // Clamp to [1, available stock]. If parsed == 0 treat as 1.
     final clamped = parsed.clamp(1, product.quantity);
     if (clamped != parsed) {
       final c = _quantityControllers[product.id!]!;
@@ -418,13 +413,8 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
                                             },
                                             onEditingComplete: () {
                                               final s = qtyCtrl.text.trim();
-                                              final parsed = int.tryParse(s);
-                                              // Reset to 1 if blank or zero,
-                                              // so the cart is never out of
-                                              // sync with the text field.
                                               if (s.isEmpty ||
-                                                  parsed == null ||
-                                                  parsed <= 0) {
+                                                  int.tryParse(s) == null) {
                                                 _setQuantity(product, 1);
                                                 setState(() {});
                                               }

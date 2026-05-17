@@ -10,24 +10,6 @@ import '../models/notifications/notification_model.dart';
 import '../models/purchase/transaction_sale.dart';
 import '../models/purchase/transaction_items.dart';
 
-/// Thrown by [DatabaseHelper.checkoutTransaction] when the requested quantity
-/// for a product exceeds its live stock at the moment of checkout.
-class InsufficientStockException implements Exception {
-  final String productName;
-  final int requested;
-  final int available;
-
-  const InsufficientStockException(
-    this.productName, {
-    required this.requested,
-    required this.available,
-  });
-
-  @override
-  String toString() =>
-      'InsufficientStockException: "$productName" — requested $requested but only $available in stock.';
-}
-
 class DatabaseHelper {
   //all about database
 
@@ -47,19 +29,7 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, dbName);
 
-    return await openDatabase(
-      path,
-      version: 2,
-      onCreate: _createDB,
-      onUpgrade: _upgradeDB,
-    );
-  }
-
-  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      // Add profile_pic column to users for existing installs.
-      await db.execute('ALTER TABLE users ADD COLUMN profile_pic TEXT');
-    }
+    return await openDatabase(path, version: 1, onCreate: _createDB);
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -67,8 +37,7 @@ class DatabaseHelper {
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,
-        profile_pic TEXT
+        password TEXT NOT NULL
       )
     ''');
 
@@ -166,19 +135,6 @@ class DatabaseHelper {
     return digest.toString();
   }
 
-  Future<String?> getProfilePicById(int userId) async {
-    final db = await instance.database;
-    final result = await db.query(
-      'users',
-      columns: ['profile_pic'],
-      where: 'id = ?',
-      whereArgs: [userId],
-      limit: 1,
-    );
-    if (result.isEmpty) return null;
-    return result.first['profile_pic'] as String?;
-  }
-
   // checks login credentials
   Future<User?> checkUser(String username, String password) async {
     final db = await instance.database;
@@ -223,11 +179,10 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
-    // Return only what changed; caller must not use the password field.
     return User(id: id, username: newUsername, password: '');
   }
 
-  Future<void> editPassword(int id, String newPassword) async {
+  Future<User> editPassword(int id, String newPassword) async {
     final db = await instance.database;
     final hashedPassword = _hashPassword(newPassword);
     await db.update(
@@ -236,32 +191,7 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
-    // No meaningful User object to return — password is never held in memory.
-  }
-
-  /// Saves a profile picture path to the users table.
-  Future<void> saveProfilePic(int userId, String path) async {
-    final db = await instance.database;
-    await db.update(
-      'users',
-      {'profile_pic': path},
-      where: 'id = ?',
-      whereArgs: [userId],
-    );
-  }
-
-  /// Retrieves the stored profile picture path, or null if none set.
-  Future<String?> getProfilePic(int userId) async {
-    final db = await instance.database;
-    final result = await db.query(
-      'users',
-      columns: ['profile_pic'],
-      where: 'id = ?',
-      whereArgs: [userId],
-      limit: 1,
-    );
-    if (result.isEmpty) return null;
-    return result.first['profile_pic'] as String?;
+    return User(id: id, username: '', password: hashedPassword);
   }
 
   //all about products
@@ -354,9 +284,6 @@ class DatabaseHelper {
 
   Future<int> deleteProduct(int id) async {
     final db = await instance.database;
-    // Remove any notifications tied to this product before deleting it,
-    // so stale lowStock / outOfStock / expiringSoon entries don't linger.
-    await db.delete('notifications', where: 'product_id = ?', whereArgs: [id]);
     return await db.delete('products', where: 'id = ?', whereArgs: [id]);
   }
 
@@ -494,32 +421,19 @@ class DatabaseHelper {
 
     // Expired Items
     for (final p in expired) {
-      // Guard: only insert into expired_products if not already there.
-      // (Prevents duplicates if checkAndProcessExpiry runs twice before
-      // the product row is fully deleted, e.g. due to a crash mid-run.)
-      final alreadyMoved = await db.query(
-        'expired_products',
-        columns: ['id'],
-        where: 'user_id = ? AND name = ? AND expiry_date = ?',
-        whereArgs: [p['user_id'], p['name'], p['expiry_date']],
-        limit: 1,
-      );
-
-      if (alreadyMoved.isEmpty) {
-        // Move product to expired_products
-        await db.insert('expired_products', {
-          'user_id': p['user_id'],
-          'name': p['name'],
-          'quantity': p['quantity'],
-          'selling_price': p['selling_price'],
-          'original_price': p['original_price'],
-          'product_type': p['product_type'],
-          'expiry_date': p['expiry_date'],
-          'description': p['description'],
-          'image_path': p['image_path'],
-          'moved_at': todayStr,
-        });
-      }
+      // Move product to expired_products
+      await db.insert('expired_products', {
+        'user_id': p['user_id'],
+        'name': p['name'],
+        'quantity': p['quantity'],
+        'selling_price': p['selling_price'],
+        'original_price': p['original_price'],
+        'product_type': p['product_type'],
+        'expiry_date': p['expiry_date'],
+        'description': p['description'],
+        'image_path': p['image_path'],
+        'moved_at': todayStr,
+      });
 
       // search notif table
       final alreadyNotified = await db.query(
@@ -670,67 +584,40 @@ class DatabaseHelper {
     }
   }
 
-  /// Returns item counts for ALL transactions belonging to [userId] in a
-  /// single GROUP BY query — use this instead of calling [getItemCount] in a
-  /// loop (N+1 problem).
-  Future<Map<String, int>> getItemCountsForUser(int userId) async {
-    final db = await instance.database;
+  // ALL ABOUT TRANSACTIONS
+  // num of trans by the hour
+  Future<int> getTransactionCount(Database db, userId, DateTime now) async {
+    final String hour = DateFormat("yyyy-MM-dd'T'HH").format(now);
+
     final result = await db.rawQuery(
       '''
-      SELECT ti.transaction_id, COUNT(*) as count
-      FROM transaction_items ti
-      JOIN transactions t ON ti.transaction_id = t.id
-      WHERE t.user_id = ?
-      GROUP BY ti.transaction_id
-      ''',
-      [userId],
+      SELECT COUNT (*) as count
+      FROM transactions
+      WHERE user_id = ?
+      AND transacted_at LIKE ?
+    ''',
+      [userId, '$hour%'],
     );
-    return {
-      for (final row in result)
-        row['transaction_id'] as String: (row['count'] as int? ?? 0),
-    };
+
+    return Sqflite.firstIntValue(result) ?? 0;
   }
 
-  // ALL ABOUT TRANSACTIONS
-  // Returns a human-readable, collision-proof transaction ID.
-  // Format: yyyyMMdd-H-XAM/PM-mmmuuu
-  //   mmm = milliseconds (000-999), uuu = microsecond remainder (000-999)
-  // Using wall-clock sub-milliseconds instead of a count-based sequence
-  // prevents collisions when the same ID is generated more than once in an hour
-  // (e.g. after a deleted transaction, or two rapid back-to-back checkouts).
+  //for generating transaction id (use this gian)
   Future<String> generateTransactionId(int userId) async {
-    final now = DateTime.now();
+    DateTime now = DateTime.now();
     final db = await instance.database;
-
     final String date = DateFormat('yyyyMMdd').format(now);
+
     final int hour12 = now.hour % 12 == 0 ? 12 : now.hour % 12;
+
     final String letter = String.fromCharCode(64 + hour12);
+
     final String period = now.hour < 12 ? 'AM' : 'PM';
 
-    // Sub-millisecond suffix guarantees uniqueness even for rapid checkouts.
-    final String ms = now.millisecond.toString().padLeft(3, '0');
-    final String us = (now.microsecond % 1000).toString().padLeft(3, '0');
-    final String suffix = '$ms$us';
+    final int count = await getTransactionCount(db, userId, now);
+    final String sequence = (count + 1).toString().padLeft(3, '0');
 
-    String candidate = '$date-$hour12-$letter$period-$suffix';
-
-    // Collision guard: if (by extreme bad luck) this ID already exists,
-    // append an incrementing counter until it is unique.
-    int guard = 0;
-    while (true) {
-      final existing = await db.query(
-        'transactions',
-        columns: ['id'],
-        where: 'id = ?',
-        whereArgs: [candidate],
-        limit: 1,
-      );
-      if (existing.isEmpty) break;
-      guard++;
-      candidate = '$date-$hour12-$letter$period-$suffix-$guard';
-    }
-
-    return candidate;
+    return '$date-$hour12-$letter$period-$sequence';
   }
 
   // Transaction operations
@@ -742,67 +629,6 @@ class DatabaseHelper {
   Future<int> insertTransactionItem(TransactionItems item) async {
     final db = await instance.database;
     return await db.insert('transaction_items', item.toMap());
-  }
-
-  /// Atomically inserts the transaction header, all line items, and decrements
-  /// stock — all inside a single SQLite transaction so a crash/error mid-way
-  /// cannot leave the database in a partially-updated state.
-  ///
-  /// Re-reads each product's current stock inside the transaction to guard
-  /// against selling more than what is actually available (stale cart state).
-  ///
-  /// Throws [InsufficientStockException] if any item's requested quantity
-  /// exceeds available stock at the time of checkout.
-  Future<void> checkoutTransaction({
-    required TransactionSale transaction,
-    required List<TransactionItems> items,
-  }) async {
-    final db = await instance.database;
-
-    await db.transaction((txn) async {
-      // 1. Insert the transaction header.
-      await txn.insert('transactions', transaction.toMap());
-
-      // 2. For each line item: re-validate stock, deduct, insert item row.
-      for (final item in items) {
-        // Re-read live stock inside the transaction (locks the row).
-        final rows = await txn.query(
-          'products',
-          columns: ['quantity'],
-          where: 'id = ?',
-          whereArgs: [item.productsId],
-          limit: 1,
-        );
-
-        if (rows.isEmpty) {
-          throw InsufficientStockException(
-            item.name,
-            requested: item.quantity,
-            available: 0,
-          );
-        }
-
-        final liveStock = rows.first['quantity'] as int;
-        if (item.quantity > liveStock) {
-          throw InsufficientStockException(
-            item.name,
-            requested: item.quantity,
-            available: liveStock,
-          );
-        }
-
-        // Deduct stock.
-        await txn.update(
-          'products',
-          {'quantity': liveStock - item.quantity},
-          where: 'id = ?',
-          whereArgs: [item.productsId],
-        );
-
-        // Insert the line item.
-        await txn.insert('transaction_items', item.toMap());
-      }
-    });
   }
 
   Future<List<TransactionSale>> getTransactionsByUser(int userId) async {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   AppTheme._();
@@ -168,7 +167,7 @@ class AppTheme {
 
   //  LIGHT ThemeData — base sizes only; app font size is MediaQuery.textScaler (see main.dart).
   static ThemeData lightTheme({String fontFamily = 'Roboto'}) {
-    final base = _buildTextTheme(fontFamily, 1.0, Brightness.light);
+    final base = _buildTextTheme(1.0, Brightness.light);
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
@@ -176,16 +175,10 @@ class AppTheme {
         brightness: Brightness.light,
         primary: brandBlue,
         onPrimary: white,
-        primaryContainer: Color(0xFFDBEAFE),
-        onPrimaryContainer: Color(0xFF1D4ED8),
+
         secondary: Color.fromARGB(255, 174, 191, 236),
         onSecondary: white,
-        secondaryContainer: brandBlue,
-        onSecondaryContainer: brandBlue,
-        tertiary: Color(0xFF42A5F5),
-        onTertiary: white,
-        tertiaryContainer: Color(0xFFE3F2FD),
-        onTertiaryContainer: brandBlueDeep,
+
         error: textRed,
         onError: white,
         errorContainer: Color(0xFFFEF2F2),
@@ -198,11 +191,6 @@ class AppTheme {
         onSurfaceVariant: textSecondary,
         outline: borderDefault,
         outlineVariant: borderBlue,
-        shadow: Color(0xFF000000),
-        scrim: Color(0xFF000000),
-        inverseSurface: Color(0xFF1C2B3F),
-        onInverseSurface: Color(0xFFF1F5F9),
-        inversePrimary: Color(0xFF93C5FD),
       ),
       scaffoldBackgroundColor: appBackground,
       textTheme: base,
@@ -217,14 +205,7 @@ class AppTheme {
         ),
         iconTheme: const IconThemeData(color: white),
       ),
-      cardTheme: CardThemeData(
-        color: cardBackground,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: borderDefault),
-        ),
-      ),
+
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith(
           (s) => s.contains(MaterialState.selected) ? white : grey500,
@@ -239,7 +220,7 @@ class AppTheme {
 
   //  DARK ThemeData
   static ThemeData darkTheme({String fontFamily = 'Roboto'}) {
-    final base = _buildTextTheme(fontFamily, 1.0, Brightness.dark);
+    final base = _buildTextTheme(1.0, Brightness.dark);
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -247,16 +228,10 @@ class AppTheme {
         brightness: Brightness.dark,
         primary: brandBlue,
         onPrimary: white,
-        primaryContainer: Color(0xFF1D4ED8),
-        onPrimaryContainer: Color(0xFFDBEAFE),
+
         secondary: Color.fromARGB(255, 181, 212, 237),
         onSecondary: white,
-        secondaryContainer: nightBlue,
-        onSecondaryContainer: Color(0xFFBFDBFE),
-        tertiary: Color(0xFF93C5FD),
-        onTertiary: Color(0xFF0D1B2E),
-        tertiaryContainer: Color(0xFF162032),
-        onTertiaryContainer: Color(0xFFDBEAFE),
+
         error: Color(0xFFEF4444),
         onError: white,
         errorContainer: Color(0xFF7F1D1D),
@@ -269,11 +244,6 @@ class AppTheme {
         onSurfaceVariant: darkTextSecondary, // light grey-blue
         outline: darkBorder,
         outlineVariant: Color(0xFF1E3A5F),
-        shadow: Color(0xFF000000),
-        scrim: Color(0xFF000000),
-        inverseSurface: cardBackground,
-        onInverseSurface: textPrimary,
-        inversePrimary: brandBlue,
       ),
       scaffoldBackgroundColor: darkBackground,
       textTheme: base,
@@ -288,14 +258,7 @@ class AppTheme {
         ),
         iconTheme: const IconThemeData(color: darkSurface),
       ),
-      cardTheme: CardThemeData(
-        color: darkCard,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: darkBorder),
-        ),
-      ),
+
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith(
           (s) => s.contains(MaterialState.selected) ? white : grey500,
@@ -309,26 +272,18 @@ class AppTheme {
   }
 
   //  TextTheme builder
-  static TextTheme _buildTextTheme(
-    String fontFamily,
-    double scale,
-    Brightness brightness,
-  ) {
+  static TextTheme _buildTextTheme(double scale, Brightness brightness) {
     final color = brightness == Brightness.light
         ? textPrimary
         : darkTextPrimary;
-    final gf = _googleFontsName(fontFamily);
 
     TextStyle apply(TextStyle base) {
       final sized = base.copyWith(
         fontSize: (base.fontSize ?? 15) * scale,
         color: color,
       );
-      try {
-        return GoogleFonts.getFont(gf, textStyle: sized);
-      } catch (_) {
-        return sized;
-      }
+
+      return sized;
     }
 
     return TextTheme(
@@ -342,25 +297,4 @@ class AppTheme {
       bodySmall: apply(bodySmall),
     );
   }
-
-  //GoogleFonts TextStyle names for switching
-  static String _googleFontsName(String name) => switch (name) {
-    'Roboto' => 'Roboto',
-    'Lato' => 'Lato',
-    'Open Sans' => 'Open Sans',
-    'Poppins' => 'Poppins',
-    'Merriweather' => 'Merriweather',
-    'Playfair Display' => 'Playfair Display',
-    _ => 'Roboto',
-  };
-
-  // Fonts shown in Display
-  static const List<String> availableFonts = [
-    'Roboto',
-    'Lato',
-    'Open Sans',
-    'Poppins',
-    'Merriweather',
-    'Playfair Display',
-  ];
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/display_provider.dart';
 
-//comment
 const _sizes = [
   (label: 'Small', scale: 0.78, fontSize: 13.0),
   (label: 'Medium', scale: 0.88, fontSize: 17.0),
@@ -20,9 +19,9 @@ class Display extends ConsumerWidget {
     final notifier = ref.read(displayProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Display'), centerTitle: true),
+      appBar: AppBar(title: Text('Display'), centerTitle: true),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: EdgeInsets.all(20.0),
         child: Column(
           children: [
             Container(
@@ -30,11 +29,11 @@ class Display extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(20),
                 color: cs.outline,
               ),
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               child: Row(
                 children: [
                   Icon(Icons.dark_mode_rounded, color: cs.primary),
-                  const SizedBox(width: 20),
+                  SizedBox(width: 20),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -50,7 +49,7 @@ class Display extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  const Spacer(),
+                  Spacer(),
                   Switch(
                     value: isDark,
                     onChanged: (value) {
@@ -62,7 +61,7 @@ class Display extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 30),
+            SizedBox(height: 30),
 
             _FontSizeCard(
               currentScale: display.fontScale,
@@ -79,7 +78,7 @@ class _FontSizeCard extends StatelessWidget {
   final double currentScale;
   final Function(double) onSelect;
 
-  const _FontSizeCard({required this.currentScale, required this.onSelect});
+  _FontSizeCard({required this.currentScale, required this.onSelect});
 
   @override
   Widget build(BuildContext context) {
@@ -94,17 +93,17 @@ class _FontSizeCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           color: cs.outline,
         ),
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Font Size',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: _sizes.map((s) {
@@ -117,7 +116,7 @@ class _FontSizeCard extends StatelessWidget {
                   onTap: () => onSelect(s.scale),
                   borderRadius: BorderRadius.circular(20),
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
+                    duration: Duration(milliseconds: 200),
                     width: 85,
                     height: 85,
                     decoration: BoxDecoration(
@@ -137,7 +136,7 @@ class _FontSizeCard extends StatelessWidget {
                 );
               }).toList(),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
           ],
         ),
       ),

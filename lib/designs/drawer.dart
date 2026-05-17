@@ -91,16 +91,17 @@ class AppDrawer extends StatelessWidget {
                       route: '/inventory',
                       page: page,
                     ),
-                    _NavItem(
-                      icon: Icons.bar_chart_rounded,
-                      label: 'HISTORY',
-                      route: '/history',
-                      page: page,
-                    ),
+
                     _NavItem(
                       icon: Icons.shopping_cart,
                       label: 'PURCHASE',
                       route: '/purchase',
+                      page: page,
+                    ),
+                    _NavItem(
+                      icon: Icons.bar_chart_rounded,
+                      label: 'HISTORY',
+                      route: '/history',
                       page: page,
                     ),
                     _NavItem(

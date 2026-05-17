@@ -76,8 +76,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   // Stock color
   Color _stockColor(int qty) {
     if (qty == 0) return AppTheme.textRed;
-    if (qty <= 5) return AppTheme.textOrange;
-    if (qty < 12) return AppTheme.warning;
+    if (qty <= 10 && qty > 0) return Colors.amber;
     return AppTheme.textGreen;
   }
 
@@ -86,22 +85,19 @@ class _HomePageState extends ConsumerState<HomePage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Product?'),
+        title: Text('Delete Product?'),
         content: Text('Remove "${product.name}" from inventory?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               ref.read(inventoryProvider.notifier).deleteProduct(product.id!);
             },
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: AppTheme.textRed),
-            ),
+            child: Text('Delete', style: TextStyle(color: AppTheme.textRed)),
           ),
         ],
       ),
@@ -116,56 +112,67 @@ class _HomePageState extends ConsumerState<HomePage> {
     return Scaffold(
       backgroundColor: cs.background,
       appBar: AppBarDesign(page: 'INVENTORY'),
-      endDrawer: const AppDrawer(page: '/inventory'),
+      endDrawer: AppDrawer(page: '/inventory'),
       body: Column(
         children: [
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // Search bar
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              decoration: BoxDecoration(
-                color: cs.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: cs.outline),
-              ),
-              child: TextField(
-                textAlignVertical: TextAlignVertical.center,
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search by name or barcode…',
-                  prefixIcon: Icon(Icons.search, color: AppTheme.textMuted),
-                  suffixIcon: GestureDetector(
-                    onTap: () async {
-                      await Future.delayed(const Duration(milliseconds: 150));
-                      final scanned = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const BarcodeScannerPage(),
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: cs.outline,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: cs.outlineVariant),
+                    ),
+                    child: TextField(
+                      textAlignVertical: TextAlignVertical.center,
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search by name or barcode…',
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: AppTheme.textMuted,
                         ),
-                      );
-                      if (scanned != null) {
-                        _searchController.text = scanned;
-                      }
-                    },
-                    child: const Icon(Icons.qr_code_scanner),
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 5,
+                        suffixIcon: GestureDetector(
+                          child: Icon(Icons.qr_code_scanner),
+                          onTap: () async {
+                            await Future.delayed(Duration(milliseconds: 150));
+                            if (!context.mounted) return;
+                            final scanned = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => BarcodeScannerPage(),
+                              ),
+                            );
+                            if (!context.mounted) return;
+                            if (scanned != null) {
+                              _searchController.text = scanned;
+                            }
+                          },
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 5,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           // Column headers + sort popup
           Padding(
-            padding: const EdgeInsets.fromLTRB(28, 0, 8, 6),
+            padding: EdgeInsets.fromLTRB(28, 0, 12, 6),
             child: Row(
               children: [
                 Expanded(
@@ -195,26 +202,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                   onSelected: (mode) => setState(() => _sortMode = mode),
                   itemBuilder: (_) => [
-                    _sortItem(
-                      _SortMode.nameAZ,
-                      'Alphabetical (A–Z)',
-                      Icons.sort_by_alpha,
-                    ),
-                    _sortItem(
-                      _SortMode.stockHighLow,
-                      'Stock (High → Low)',
-                      Icons.inventory_2_outlined,
-                    ),
+                    _sortItem(_SortMode.nameAZ, 'Alphabetical (A–Z)'),
+                    _sortItem(_SortMode.stockHighLow, 'Stock (High → Low)'),
                     _sortItem(
                       _SortMode.expiryNearFar,
-                      'Expiry (Nearest first)',
-                      Icons.calendar_today_outlined,
+                      'Expiry (Nearest Expiration)',
                     ),
-                    _sortItem(
-                      _SortMode.groupByType,
-                      'Group by Type',
-                      Icons.category_outlined,
-                    ),
+                    _sortItem(_SortMode.groupByType, 'Group by Type'),
                   ],
                 ),
               ],
@@ -237,7 +231,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                           size: 64,
                           color: AppTheme.textMuted,
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         Text(
                           'No products yet',
                           style: AppTheme.bodyLarge.copyWith(
@@ -269,11 +263,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                         .add(p);
                   }
                   return ListView(
-                    padding: const EdgeInsets.only(bottom: 20),
+                    padding: EdgeInsets.only(bottom: 20),
                     children: groups.entries.expand((entry) {
                       return [
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
+                          padding: EdgeInsets.fromLTRB(20, 14, 20, 4),
                           child: Text(
                             entry.key,
                             style: AppTheme.titleSmall.copyWith(
@@ -288,12 +282,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 20),
+                  padding: EdgeInsets.only(bottom: 20),
                   itemCount: products.length,
                   itemBuilder: (_, i) => _productTile(products[i], cs),
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => Center(child: CircularProgressIndicator()),
               error: (err, _) => Center(child: Text('Error: $err')),
             ),
           ),
@@ -303,22 +297,12 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   // Helper: sort menu item with active checkmark
-  PopupMenuItem<_SortMode> _sortItem(
-    _SortMode mode,
-    String label,
-    IconData icon,
-  ) {
+  PopupMenuItem<_SortMode> _sortItem(_SortMode mode, String label) {
     final isActive = _sortMode == mode;
     return PopupMenuItem<_SortMode>(
       value: mode,
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 18,
-            color: isActive ? AppTheme.brandBlue : AppTheme.textMuted,
-          ),
-          const SizedBox(width: 10),
           Expanded(
             child: Text(
               label,
@@ -333,28 +317,34 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   Widget _productTile(Product product, ColorScheme cs) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Material(
         color: cs.surface,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 5),
           child: Row(
             children: [
               Expanded(
                 flex: 3,
                 child: Text(
                   product.name,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
+                  softWrap: true,
                   style: AppTheme.bodyMedium,
                 ),
               ),
               Expanded(
                 flex: 2,
-                child: Text(
-                  '${product.quantity}',
-                  style: AppTheme.bodyMedium.copyWith(
-                    color: _stockColor(product.quantity),
+                child: Center(
+                  child: Text(
+                    '${product.quantity}',
+                    style: AppTheme.bodyMedium.copyWith(
+                      color: _stockColor(product.quantity),
+                      fontWeight: FontWeight(1000),
+                      fontSize: 15,
+                    ),
                   ),
                 ),
               ),
@@ -366,9 +356,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                 ),
               ),
 
-              // ── Product action popup menu ────────────────────────────
+              //Product action popup menu
               PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert, size: 18),
+                icon: Icon(Icons.more_vert, size: 18),
                 tooltip: 'Options',
                 color: cs.surface,
                 shape: RoundedRectangleBorder(
@@ -396,8 +386,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                           size: 18,
                           color: AppTheme.textMuted,
                         ),
-                        const SizedBox(width: 10),
-                        const Text('Edit'),
+                        SizedBox(width: 10),
+                        Text('Edit'),
                       ],
                     ),
                   ),
@@ -410,7 +400,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                           size: 18,
                           color: AppTheme.textRed,
                         ),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10),
                         Text(
                           'Delete',
                           style: TextStyle(color: AppTheme.textRed),

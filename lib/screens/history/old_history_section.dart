@@ -78,9 +78,13 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
         final transactions = await DatabaseHelper.instance
             .getTransactionsByUser(user.id!);
 
-        // Single query for all item counts instead of one query per transaction.
-        final Map<String, int> counts = await DatabaseHelper.instance
-            .getItemCountsForUser(user.id!);
+        // item count cache
+        final Map<String, int> counts = {};
+        for (final t in transactions) {
+          if (t.id != null) {
+            counts[t.id!] = await DatabaseHelper.instance.getItemCount(t.id!);
+          }
+        }
 
         // JOIN rows for profit computation
         final allItemRows = await DatabaseHelper.instance
@@ -196,13 +200,12 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
   }
 
   List<TransactionSale> _getFilteredTransactions() {
-    final date = _selectedDate ?? DateTime.now();
     return _transactions.where((t) {
       final transDate = DateTime.tryParse(t.transactedAt);
-      if (transDate == null) return false;
-      return transDate.year == date.year &&
-          transDate.month == date.month &&
-          transDate.day == date.day;
+      if (transDate == null || _selectedDate == null) return false;
+      return transDate.year == _selectedDate!.year &&
+          transDate.month == _selectedDate!.month &&
+          transDate.day == _selectedDate!.day;
     }).toList();
   }
 

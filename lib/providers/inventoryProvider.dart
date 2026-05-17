@@ -9,42 +9,55 @@ import '../models/products/expired_product.dart';
 import '../models/notifications/notification_model.dart';
 import 'auth_provider.dart';
 
+//sort order
+enum NotifSortOrder { newestFirst, oldestFirst }
+
 class InventoryState {
   final List<Product> products;
   final List<ExpiredProduct> expiredProducts;
   final List<AppNotification> notifications;
+  final NotifSortOrder sortOrder;
 
   const InventoryState({
     this.products = const [],
     this.expiredProducts = const [],
     this.notifications = const [],
+    this.sortOrder = NotifSortOrder.newestFirst,
   });
+
+  //filltered getters
 
   List<AppNotification> get expiringSoon =>
       notifications.where((n) => n.type == NotifType.expiringSoon).toList();
+
   List<AppNotification> get lowStockNotifications => notifications
       .where(
         (n) => n.type == NotifType.lowStock || n.type == NotifType.outOfStock,
       )
       .toList();
-  int get unreadCount => notifications.where((n) => !n.isRead).length;
 
   InventoryState copyWith({
     List<Product>? products,
     List<ExpiredProduct>? expiredProducts,
     List<AppNotification>? notifications,
+    NotifSortOrder? sortOrder,
   }) {
     return InventoryState(
       products: products ?? this.products,
       expiredProducts: expiredProducts ?? this.expiredProducts,
       notifications: notifications ?? this.notifications,
+      sortOrder: sortOrder ?? this.sortOrder,
     );
   }
 }
 
+// Notifier
+
 class InventoryNotifier extends AsyncNotifier<InventoryState> {
-  // Shorthand for the database helper
   final _db = DatabaseHelper.instance;
+
+  // Preserve sort order across refreshes
+  NotifSortOrder _sortOrder = NotifSortOrder.newestFirst;
 
   @override
   Future<InventoryState> build() async {
@@ -52,18 +65,21 @@ class InventoryNotifier extends AsyncNotifier<InventoryState> {
     if (user == null) return const InventoryState();
 
     await _db.checkAndProcessExpiry(user.id!);
-
     return _fetchAll(user.id!);
   }
 
   Future<InventoryState> _fetchAll(int userId) async {
     final products = await _db.getProductsByUser(userId);
     final expiredProducts = await _db.getExpiredProductByUSer(userId);
-    final notifications = await _db.getNotifications(userId);
+    final notifications = await _db.getNotifications(
+      userId,
+      ascending: _sortOrder == NotifSortOrder.oldestFirst,
+    );
     return InventoryState(
       products: products,
       expiredProducts: expiredProducts,
       notifications: notifications,
+      sortOrder: _sortOrder,
     );
   }
 
@@ -72,6 +88,17 @@ class InventoryNotifier extends AsyncNotifier<InventoryState> {
     if (user == null) return;
 
     await _db.checkAndProcessExpiry(user.id!);
+    state = AsyncData(await _fetchAll(user.id!));
+  }
+
+  // Toggles sort order and re fetches.
+  Future<void> toggleSortOrder() async {
+    _sortOrder = _sortOrder == NotifSortOrder.newestFirst
+        ? NotifSortOrder.oldestFirst
+        : NotifSortOrder.newestFirst;
+
+    final user = ref.read(authProvider).value;
+    if (user == null) return;
     state = AsyncData(await _fetchAll(user.id!));
   }
 
@@ -85,13 +112,11 @@ class InventoryNotifier extends AsyncNotifier<InventoryState> {
 
   Future<List<Product>> searchProduct(int userId, String query) async {
     final products = await _db.getProductsByUser(userId);
-
     if (query.isEmpty) return products;
-
     final lowQuery = query.toLowerCase();
-    return products.where((product) {
-      return product.name.toLowerCase().contains(lowQuery) ||
-          (product.barcode?.toLowerCase().contains(lowQuery) ?? false);
+    return products.where((p) {
+      return p.name.toLowerCase().contains(lowQuery) ||
+          (p.barcode?.toLowerCase().contains(lowQuery) ?? false);
     }).toList();
   }
 
@@ -110,36 +135,39 @@ class InventoryNotifier extends AsyncNotifier<InventoryState> {
     await refresh();
   }
 
+  // Expired operations
+
   Future<void> deleteExpiredProduct(int id) async {
     await _db.deleteExpiredProduct(id);
     await refresh();
   }
 
+  // Notification operations
+
+  // Deletes a notification.
+  // For expired type. removes the expired_product record.
+  // For outOfStock type. removes the zero-stock product record.
   Future<void> deleteNotification(int id) async {
-    await _db.deleteNotification(id);
+    await _db.deleteNotification(id); // cascade logic is in DB layer
     await refresh();
   }
 
-  Future<void> markRead(int id) async {
-    await _db.markNotificationRead(id);
-    await refresh();
-  }
+  // Image picker
 
   Future<String?> pickAndSaveImage(ImageSource source) async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: source, imageQuality: 80);
-
     if (picked == null) return null;
 
     final appDir = await getApplicationDocumentsDirectory();
     final fileName = 'product_${DateTime.now().millisecondsSinceEpoch}.jpg';
     final savedPath = p.join(appDir.path, fileName);
-
     await File(picked.path).copy(savedPath);
-
     return savedPath;
   }
 }
+
+// Provider
 
 final inventoryProvider =
     AsyncNotifierProvider<InventoryNotifier, InventoryState>(

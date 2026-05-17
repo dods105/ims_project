@@ -8,7 +8,6 @@ class AppNotification {
   final int quantity;
   final String expiryDate;
   final NotifType type;
-  final bool isRead;
   final String createdAt;
 
   AppNotification({
@@ -19,7 +18,6 @@ class AppNotification {
     required this.quantity,
     required this.expiryDate,
     required this.type,
-    this.isRead = false,
     required this.createdAt,
   });
 
@@ -32,7 +30,6 @@ class AppNotification {
       'quantity': quantity,
       'expiry_date': expiryDate,
       'type': _typeToString(type),
-      'is_read': isRead ? 1 : 0,
       'created_at': createdAt,
     };
   }
@@ -46,7 +43,6 @@ class AppNotification {
       quantity: map['quantity'],
       expiryDate: map['expiry_date'],
       type: _typeFromString(map['type']),
-      isRead: map['is_read'] == 1,
       createdAt: map['created_at'] ?? '',
     );
   }

@@ -11,10 +11,19 @@ class Account extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authAsync = ref.watch(authProvider);
-    final picPath = ref.watch(profileProvider);
+    // profileProvider is now AsyncNotifier — use .value for the path.
+    final picPath = ref.watch(profileProvider).value;
     final cs = Theme.of(context).colorScheme;
 
-    final username = authAsync.value?.username ?? '';
+    final user = authAsync.value;
+    final username = user?.username ?? '';
+    final userId = user?.id;
+
+    if (userId == null) {
+      // Shouldn't happen — AuthGate prevents reaching this screen when
+      // logged out — but guard anyway to avoid using id 0.
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text("MY ACCOUNT"), centerTitle: true),
@@ -27,9 +36,8 @@ class Account extends ConsumerWidget {
                 CircleAvatar(
                   radius: 70,
                   backgroundImage: picPath != null
-                      ? FileImage(File(picPath))
-                      : const AssetImage('assets/images/default-pfp.png')
-                            as ImageProvider,
+                      ? FileImage(File(picPath)) as ImageProvider
+                      : const AssetImage('assets/images/default-pfp.png'),
                 ),
                 Positioned(
                   bottom: 4,
@@ -37,7 +45,7 @@ class Account extends ConsumerWidget {
                   child: GestureDetector(
                     onTap: () => ref
                         .read(profileProvider.notifier)
-                        .pickProfilePicture(authAsync.value?.id ?? 0),
+                        .pickProfilePicture(userId),
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: const BoxDecoration(
@@ -57,14 +65,12 @@ class Account extends ConsumerWidget {
             const SizedBox(height: 16),
 
             GestureDetector(
-              onTap: () {
-                AccountActions.showEditNameDialog(
-                  context,
-                  ref,
-                  username,
-                  authAsync.value?.id ?? 0,
-                );
-              },
+              onTap: () => AccountActions.showEditNameDialog(
+                context,
+                ref,
+                username,
+                userId,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -81,27 +87,21 @@ class Account extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-            // Change password button
             SizedBox(
               width: 220,
               child: TextButton(
-                style: TextButton.styleFrom(backgroundColor: cs.secondary),
-                onPressed: () {
-                  AccountActions.showChangePasswordDialog(
-                    context,
-                    authAsync.value?.id ?? 0,
-                  );
-                },
+                style: TextButton.styleFrom(backgroundColor: cs.primary),
+                onPressed: () => AccountActions.showChangePasswordDialog(
+                  context,
+                  ref,
+                  userId,
+                ),
                 child: Text(
                   "CHANGE PASSWORD",
                   style: TextStyle(color: cs.surface),
                 ),
               ),
             ),
-
-            const SizedBox(height: 12),
-
-            // Logout
           ],
         ),
       ),
@@ -120,7 +120,7 @@ class AccountActions {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text("CHANGE USERNAME"),
         content: TextField(
           controller: controller,
@@ -131,7 +131,7 @@ class AccountActions {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text("CANCEL"),
           ),
           ElevatedButton(
@@ -141,13 +141,29 @@ class AccountActions {
             ),
             onPressed: () async {
               final newName = controller.text.trim();
-              if (newName.isNotEmpty && newName != currentName) {
-                // Update db
-                await DatabaseHelper.instance.editUsername(userId, newName);
-                // Update ui
-                ref.read(authProvider.notifier).updateStateName(newName);
-                if (context.mounted) Navigator.pop(context);
+              if (newName.isEmpty || newName == currentName) {
+                Navigator.pop(ctx);
+                return;
               }
+              // Check uniqueness before saving.
+              final taken = await DatabaseHelper.instance.usernameExists(
+                newName,
+              );
+              if (taken) {
+                if (ctx.mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(
+                      content: Text('That username is already taken'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+                return;
+              }
+              await DatabaseHelper.instance.editUsername(userId, newName);
+              // updateUsername (not the removed updateStateName).
+              await ref.read(authProvider.notifier).updateUsername(newName);
+              if (ctx.mounted) Navigator.pop(ctx);
             },
             child: const Text("SAVE"),
           ),
@@ -156,73 +172,69 @@ class AccountActions {
     );
   }
 
-  static void showChangePasswordDialog(BuildContext context, int userId) {
+  static void showChangePasswordDialog(
+    BuildContext context,
+    WidgetRef ref,
+    int userId,
+  ) {
     final controller = TextEditingController();
-    bool obscurePassword = true;
+    bool obscure = true;
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: const Text("CHANGE PASSWORD"),
-            content: TextField(
-              controller: controller,
-              obscureText: obscurePassword,
-              decoration: InputDecoration(
-                labelText: "New Password",
-                hintText: "At least 6 characters",
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    obscurePassword ? Icons.visibility_off : Icons.visibility,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      obscurePassword = !obscurePassword;
-                    });
-                  },
-                ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          title: const Text("CHANGE PASSWORD"),
+          content: TextField(
+            controller: controller,
+            obscureText: obscure,
+            decoration: InputDecoration(
+              labelText: "New Password",
+              hintText: "At least 6 characters",
+              border: const OutlineInputBorder(),
+              suffixIcon: IconButton(
+                icon: Icon(obscure ? Icons.visibility_off : Icons.visibility),
+                onPressed: () => setState(() => obscure = !obscure),
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("CANCEL"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("CANCEL"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                foregroundColor: Colors.white,
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () async {
-                  final newPass = controller.text;
-
-                  if (newPass.length >= 6) {
-                    // Update database pass
-                    await DatabaseHelper.instance.editPassword(userId, newPass);
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Password updated successfully!"),
-                        ),
-                      );
-                    }
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Password must be at least 6 characters"),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                },
-                child: const Text("UPDATE"),
-              ),
-            ],
-          );
-        },
+              onPressed: () async {
+                final newPass = controller.text;
+                if (newPass.length < 6) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(
+                      content: Text('Password must be at least 6 characters'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+                // editPassword no longer returns a User — just awaits.
+                await DatabaseHelper.instance.editPassword(userId, newPass);
+                await ref.read(authProvider.notifier).updatePassword();
+                if (ctx.mounted) {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(
+                      content: Text("Password updated successfully!"),
+                    ),
+                  );
+                }
+              },
+              child: const Text("UPDATE"),
+            ),
+          ],
+        ),
       ),
     );
   }

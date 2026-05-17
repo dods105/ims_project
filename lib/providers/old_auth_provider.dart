@@ -24,31 +24,41 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
   Future<void> logout() async {
     await SessionManager.clearSession();
-    ref.read(profileProvider.notifier).clear();
     state = const AsyncData(null);
   }
 
-  /// Updates the username in state and session storage.
-  /// Call this after [DatabaseHelper.editUsername] succeeds.
   Future<void> updateUsername(String newName) async {
     final currentUser = state.value;
-    if (currentUser == null) return;
-    state = AsyncData(
-      User(id: currentUser.id, username: newName, password: ''),
-    );
-    await SessionManager.saveSession(currentUser.id!, newName);
+    if (currentUser != null) {
+      final updatedUser = User(
+        id: currentUser.id,
+        username: newName,
+        password: '',
+      );
+      state = AsyncData(updatedUser);
+
+      await SessionManager.saveSession(currentUser.id!, newName);
+    }
   }
 
-  /// Refreshes in-memory state after a password change.
-  /// The actual hash is written to the DB by [DatabaseHelper.editPassword];
-  /// passwords are never held in memory beyond the login call.
-  Future<void> updatePassword() async {
+  Future<void> updatePassword(String newHashedPassword) async {
     final currentUser = state.value;
-    if (currentUser == null) return;
-    // Re-stamp state so any listeners rebuild (e.g. to show a success banner).
-    state = AsyncData(
-      User(id: currentUser.id, username: currentUser.username, password: ''),
-    );
+    if (currentUser != null) {
+      state = AsyncData(
+        User(id: currentUser.id, username: currentUser.username, password: ''),
+      );
+    }
+  }
+
+  Future<void> updateStateName(String newName) async {
+    final currentUser = state.value;
+    if (currentUser != null) {
+      // update with new name but keep id
+      state = AsyncData(
+        User(id: currentUser.id, username: newName, password: ''),
+      );
+      await SessionManager.saveSession(currentUser.id!, newName);
+    }
   }
 }
 

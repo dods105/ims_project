@@ -13,8 +13,6 @@ import 'designs/themes.dart';
 import 'providers/display_provider.dart';
 import 'screens/notification/notification.dart';
 import 'screens/inventory/home_page.dart';
-import 'screens/purchase/Buyersinfo.dart';
-import 'screens/purchase/Receipt.dart';
 
 // Walang Binago si Jehron
 void main() async {
@@ -37,9 +35,7 @@ class MainApp extends ConsumerWidget {
       builder: (context, child) {
         final mq = MediaQuery.of(context);
         return MediaQuery(
-          data: mq.copyWith(
-            textScaler: TextScaler.linear(display.fontScale),
-          ),
+          data: mq.copyWith(textScaler: TextScaler.linear(display.fontScale)),
           child: child ?? const SizedBox.shrink(),
         );
       },
@@ -56,8 +52,6 @@ class MainApp extends ConsumerWidget {
         '/account': (context) => Account(),
         '/display': (context) => const Display(),
         '/purchaseList': (context) => const ListofPurchase(),
-        '/BuyersInfo': (context) => const Buyersinfo(),
-        '/Receipt': (context) => const Receipt(),
       },
       debugShowCheckedModeBanner: false,
     );

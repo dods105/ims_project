@@ -12,7 +12,7 @@ import '../../providers/inventoryProvider.dart';
 class EditProductPage extends ConsumerStatefulWidget {
   final Product product;
 
-  const EditProductPage({super.key, required this.product});
+  EditProductPage({super.key, required this.product});
 
   @override
   ConsumerState<EditProductPage> createState() => _EditProductPageState();
@@ -159,12 +159,7 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
       _snack('Enter No. of Items', isError: true);
       return;
     }
-    // Original price is required so profit calculations are never silently
-    // broken by a null originalPrice on an edited product.
-    if (originalPriceController.text.trim().isEmpty) {
-      _snack('Enter Original Price', isError: true);
-      return;
-    }
+
     if (srpController.text.isEmpty) {
       _snack('Enter SRP', isError: true);
       return;
@@ -260,15 +255,9 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
                                 : Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(
-                                        Icons.add_photo_alternate_outlined,
-                                        size: 28,
-                                      ),
-                                      SizedBox(height: 4),
-                                      Text(
-                                        'Add Photo',
-                                        style: TextStyle(fontSize: 12),
-                                      ),
+                                      Icon(Icons.add_a_photo, size: 28),
+                                      SizedBox(height: 3),
+                                      Text('Photo'),
                                     ],
                                   ),
                           ),
@@ -276,7 +265,9 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
                       ],
                     ),
                   ),
-                  SizedBox(width: 16),
+
+                  SizedBox(width: 15),
+
                   // Name + Description
                   Expanded(
                     flex: 2,
@@ -288,19 +279,20 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
                         TextField(
                           controller: nameController,
                           decoration: InputDecoration(
-                            hintText: 'Enter name',
                             border: OutlineInputBorder(),
+                            hintText: 'Enter product name',
                           ),
                         ),
-                        SizedBox(height: 10),
+                        SizedBox(height: 15),
                         Text('DESCRIPTION'),
                         SizedBox(height: 5),
                         TextField(
                           controller: descriptionController,
-                          maxLines: 2,
+                          minLines: 1,
+                          maxLines: null,
                           decoration: InputDecoration(
-                            hintText: 'Optional',
                             border: OutlineInputBorder(),
+                            hintText: 'Tap to add description',
                           ),
                         ),
                       ],
@@ -309,16 +301,16 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
                 ],
               ),
 
-              SizedBox(height: 15),
+              SizedBox(height: 20),
 
-              // Barcode
-              Text('BARCODE'),
-              SizedBox(height: 5),
+              //  Barcode
               TextField(
                 controller: barcodeController,
                 decoration: InputDecoration(
-                  hintText: 'Scan or enter barcode',
-                  border: OutlineInputBorder(),
+                  hintText: 'Barcode number…',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   suffixIcon: Transform.translate(
                     offset: Offset(-6, 0),
                     child: Material(

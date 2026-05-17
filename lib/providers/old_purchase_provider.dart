@@ -50,12 +50,10 @@ class PurchaseNotifier extends Notifier<PurchaseState> {
   void updateQuantity(int productId, int quantity) {
     final newItems = Map<int, PurchaseItem>.from(state.items);
     final existing = newItems[productId];
-    // Enforce minimum of 1; caller should remove the product if qty reaches 0.
-    final safeQty = quantity < 1 ? 1 : quantity;
-    if (existing != null) {
+    if (existing != null && quantity > 0) {
       newItems[productId] = PurchaseItem(
         product: existing.product,
-        quantity: safeQty,
+        quantity: quantity,
       );
       state = state.copyWith(items: newItems);
     }

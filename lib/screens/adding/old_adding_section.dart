@@ -127,13 +127,9 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
         final newName = nameController.text.trim();
 
         if (existingName != newName) {
-          // null  = tapped outside (barrier)
-          // false = 'Close' button
-          // 'keep' = 'Keep Existing Name'
-          // 'change' = 'Change Product Name'
           final result = await showDialog<String>(
             context: context,
-            barrierDismissible: false, // force an explicit choice
+            barrierDismissible: false,
             builder: (context) {
               return AlertDialog(
                 title: Text('Product Name Mismatch'),
@@ -142,11 +138,14 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                 ),
                 actions: [
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop('close'),
+                    onPressed: () {
+                      Navigator.of(context).pop('close');
+                    },
                     child: Text('Close'),
                   ),
                   TextButton(
                     onPressed: () => Navigator.of(context).pop('keep'),
+
                     child: Text('Keep Existing Name'),
                   ),
                   TextButton(
@@ -162,15 +161,13 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
             },
           );
 
-          // 'close', null (barrier tap), or anything unrecognised → cancel
-          if (result == null || result == 'close') {
+          if (result == 'close' || result == null) {
             return;
           }
 
           if (result == 'keep') {
             nameController.text = existingName;
           }
-          // 'change' → keep nameController as-is (user's new name)
         }
       }
     }
@@ -213,12 +210,9 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
           sellingPrice != newSell || originalPrice != newOriginal;
 
       if (priceChange) {
-        // 'update' = Yes, Update Price
-        // 'keep'   = No, Keep Old Price
-        // 'close' or null (barrier tap) = cancel entirely
-        final result = await showDialog<String>(
+        final String? result = await showDialog<String>(
           context: context,
-          barrierDismissible: false, // force an explicit choice
+          barrierDismissible: false,
           builder: (context) {
             return AlertDialog(
               title: const Text('Price Change Detected'),
@@ -228,21 +222,25 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop('close'),
+                  onPressed: () {
+                    Navigator.of(context).pop('close');
+                  },
                   child: const Text(
                     'Close',
                     style: TextStyle(color: Colors.grey),
                   ),
                 ),
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop('keep'),
+                  onPressed: () {
+                    Navigator.of(context).pop('keep');
+                  },
                   child: const Text(
                     'No, Keep Old Price',
                     style: TextStyle(color: Colors.grey),
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop('update'),
+                  onPressed: () => Navigator.of(context).pop('change'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.brandBlue,
                   ),
@@ -256,13 +254,12 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
           },
         );
 
-        // 'close', null (barrier tap), or anything unrecognised → cancel
-        if (result == null || result == 'close') {
+        if (result == 'close' || result == null) {
           return;
         }
 
         if (result == 'keep') {
-          // Restore the existing prices on the product object
+          // User chose not to update price, add product with original price
           product = Product(
             userId: product.userId,
             name: product.name,
@@ -276,7 +273,6 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
             imagePath: product.imagePath,
           );
         }
-        // 'update' → product already holds the new prices, nothing to do
       }
     }
 
@@ -375,8 +371,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Use watch so the button reacts if auth state changes mid-session.
-    final userId = ref.watch(authProvider).value?.id;
+    final userId = ref.read(authProvider).value?.id;
     double screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBarDesign(page: 'ADD PRODUCT'),
@@ -756,18 +751,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          if (userId == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Session expired. Please log in again.',
-                                ),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                            return;
-                          }
-                          savedproduct(userId);
+                          savedproduct(userId!);
                         },
                         icon: Icon(Icons.add, color: Colors.white),
                         label: Text('Add'),

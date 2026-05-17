@@ -2,11 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/providers/auth_provider.dart';
+import 'package:flutter_application_1/providers/profile_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../database/database_helper.dart';
 import '../../models/login/user.dart';
 import '../../designs/themes.dart';
-import '../../services/session_manager.dart';
 
 class LoginSignupPage extends ConsumerStatefulWidget {
   const LoginSignupPage({super.key});
@@ -20,7 +20,6 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _isLoading = false; // guard against double-submit
 
   @override
   void dispose() {
@@ -29,14 +28,22 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
     super.dispose();
   }
 
+  /*
+  saves user information to the database
+  and retrieves user info from the database
+   */
   Future<void> _handleSubmit() async {
-    if (_isLoading) return; // prevent double-tap
     final username = _usernameController.text.trim();
     final password = _passwordController.text;
 
+    // is the username empty?
     String? usernameError = validateUsername(username);
+
+    //is the password empty? or is it less than 6 in length?
     String? passwordError = validatePassword(password);
 
+    // if username or password condtions are not satisfied,
+    // display error and do not sign up/ log in
     if (usernameError != null || passwordError != null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -49,52 +56,58 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
       return;
     }
 
-    setState(() => _isLoading = true);
-    try {
-      if (isLoginMode) {
-        final user = await DatabaseHelper.instance.checkUser(
-          username,
-          password,
-        );
-        if (user != null) {
-          if (mounted) await ref.read(authProvider.notifier).login(user);
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Invalid username or password'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        }
+    if (isLoginMode) {
+      /*
+      if user clicks log in
+      verify if username and password exist in the Db
+      proceed to log the user
+
+      if not, displaye error
+     */
+      final user = await DatabaseHelper.instance.checkUser(username, password);
+      if (user != null) {
+        if (mounted) await ref.read(authProvider.notifier).login(user);
       } else {
-        final exists = await DatabaseHelper.instance.usernameExists(username);
-        if (exists) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Username already exists'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        } else {
-          final newUser = User(username: username, password: password);
-          final createdUser = await DatabaseHelper.instance.createUser(newUser);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Account created successfully!'),
-                backgroundColor: AppTheme.primaryBlue,
-              ),
-            );
-            await ref.read(authProvider.notifier).login(createdUser);
-          }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Invalid username or password'),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+    } else {
+      /*
+        Sign in
+       */
+      final exists = await DatabaseHelper.instance.usernameExists(username);
+      if (exists) {
+        /**if name exist tell the user, and do not proceed with account creation */
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Username already exists'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        /**
+         * username does not exist in the databse yet, proceed to create an account
+         */
+        final newUser = User(username: username, password: password);
+        final createdUser = await DatabaseHelper.instance.createUser(newUser);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Account created successfully!'),
+              backgroundColor: AppTheme.primaryBlue,
+            ),
+          );
+          await ref.read(authProvider.notifier).login(createdUser);
+        }
+      }
     }
   }
 
@@ -117,17 +130,9 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
     });
   }
 
-  Future<String?> _getLastUserProfilePic() async {
-    // 1. Check who logged in last
-    final lastId = await SessionManager.getLastLoggedInUserId();
-    if (lastId == null) return null;
-
-    // 2. Fetch their picture path from SQLite
-    return await DatabaseHelper.instance.getProfilePicById(lastId);
-  }
-
   @override
   Widget build(BuildContext context) {
+    final picPath = ref.watch(profileProvider);
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -136,39 +141,17 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Default avatar — no per-user pic on login screen to prevent
-              // the previous user's photo leaking to the next person who opens
-              // the app.
-              FutureBuilder<String?>(
-                future: isLoginMode
-                    ? _getLastUserProfilePic()
-                    : Future.value(null),
-                builder: (context, snapshot) {
-                  final imagePath = snapshot.data;
-
-                  // Decide the image source dynamically
-                  ImageProvider avatarImage = const AssetImage(
-                    'assets/images/default-pfp.png',
-                  );
-                  if (isLoginMode &&
-                      imagePath != null &&
-                      imagePath.isNotEmpty) {
-                    final file = File(imagePath);
-                    if (file.existsSync()) {
-                      avatarImage = FileImage(file);
-                    }
-                  }
-
-                  return CircleAvatar(
-                    radius: 80,
-                    backgroundColor: Colors.deepPurpleAccent,
-                    child: CircleAvatar(
-                      radius: 75,
-                      backgroundColor: const Color.fromARGB(192, 229, 229, 242),
-                      backgroundImage: avatarImage,
-                    ),
-                  );
-                },
+              // User Profile
+              CircleAvatar(
+                radius: 80,
+                backgroundColor: Colors.deepPurpleAccent,
+                child: CircleAvatar(
+                  radius: 75,
+                  backgroundColor: const Color.fromARGB(192, 229, 229, 242),
+                  backgroundImage: (!isLoginMode || picPath == null)
+                      ? const AssetImage('assets/images/default-pfp.png')
+                      : FileImage(File(picPath)) as ImageProvider,
+                ),
               ),
               const SizedBox(height: 10),
               Text(
@@ -241,11 +224,12 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
               ),
               const SizedBox(height: 15),
 
+              // button -> log in or sign up
               Center(
                 child: SizedBox(
                   width: 100,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleSubmit,
+                    onPressed: _handleSubmit,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryBlue,
                       foregroundColor: Colors.white,
@@ -254,23 +238,13 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
                         borderRadius: BorderRadius.circular(25),
                       ),
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(
-                            isLoginMode ? 'Login' : 'Sign Up',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
+                    child: Text(
+                      isLoginMode ? 'Login' : 'Sign Up',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ),

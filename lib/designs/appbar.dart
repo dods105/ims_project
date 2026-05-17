@@ -15,7 +15,7 @@ class AppBarDesign extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profile = ref.watch(profileProvider);
+    final profileAsync = ref.watch(profileProvider);
     final name = ref.watch(authProvider).value?.username ?? '';
 
     return AppBar(
@@ -23,12 +23,24 @@ class AppBarDesign extends ConsumerWidget implements PreferredSizeWidget {
         children: [
           const SizedBox(width: 8),
           // store profile
-          CircleAvatar(
-            radius: 16,
-            backgroundImage: profile != null
-                ? FileImage(File(profile))
-                : const AssetImage('assets/images/default-pfp.png')
-                      as ImageProvider,
+          profileAsync.when(
+            data: (profilePath) => CircleAvatar(
+              radius: 16,
+              backgroundImage: profilePath != null && profilePath.isNotEmpty
+                  ? FileImage(File(profilePath))
+                  : const AssetImage('assets/images/default-pfp.png')
+                        as ImageProvider,
+            ),
+            // While loading the path from SQLite, show a default asset placeholder
+            loading: () => const CircleAvatar(
+              radius: 16,
+              backgroundImage: AssetImage('assets/images/default-pfp.png'),
+            ),
+            // Fallback placeholder on database error
+            error: (_, __) => const CircleAvatar(
+              radius: 16,
+              backgroundImage: AssetImage('assets/images/default-pfp.png'),
+            ),
           ),
           //store name
           const SizedBox(width: 8),
@@ -36,17 +48,15 @@ class AppBarDesign extends ConsumerWidget implements PreferredSizeWidget {
           const Spacer(),
           Text(
             page.toUpperCase(),
-            style: TextStyle(
+            style: const TextStyle(
               fontWeight: FontWeight.w900,
-              fontSize: 25,
+              fontSize: 18,
               letterSpacing: 0.85,
             ),
           ),
           const Spacer(),
         ],
       ),
-
-      // current page
     );
   }
 }

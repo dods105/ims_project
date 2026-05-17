@@ -7,6 +7,7 @@ import '../../providers/inventoryProvider.dart';
 import '../../database/database_helper.dart';
 import '../../models/purchase/transaction_sale.dart';
 import '../../models/purchase/transaction_items.dart';
+import '../../models/products/products.dart';
 import '../../designs/receipt.dart';
 
 class ListofPurchase extends ConsumerStatefulWidget {
@@ -66,6 +67,7 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
 
   Future<void> _processCheckout() async {
     final purchaseState = ref.read(purchaseProvider);
+    final inventoryNotifier = ref.read(inventoryProvider.notifier);
     final db = DatabaseHelper.instance;
     final cs = Theme.of(context).colorScheme;
 
@@ -83,119 +85,99 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
     if (cash < purchaseState.totalPrice) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            _cashController.text.trim().isEmpty
-                ? 'Please enter the cash amount'
-                : 'Cash amount is less than the total (₱${purchaseState.totalPrice.toStringAsFixed(2)})',
-          ),
+          content: Text('Cash input is empty'),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
 
-    setState(() => _isProcessing = true);
+    setState(() {
+      _isProcessing = true;
+    });
 
     try {
       final user = ref.read(authProvider).value;
-      if (user == null) throw Exception('User not authenticated');
-
-      // Capture all receipt data BEFORE clearing state or navigating.
-      final receiptItems = purchaseState.items.values.toList();
-      final receiptTotal = purchaseState.totalPrice;
-      final receiptCash = cash;
-      final receiptTxnId = transactionId!;
-      final receiptCustomer = _customerNameController.text;
-      final receiptAddress = _customerAddressController.text;
-      final receiptTime = DateTime.now().toIso8601String();
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
 
       final transaction = TransactionSale(
-        id: receiptTxnId,
+        id: transactionId,
         userId: user.id!,
-        customerName: receiptCustomer.isNotEmpty ? receiptCustomer : null,
-        customerAddress: receiptAddress.isNotEmpty ? receiptAddress : null,
-        amountPayed: receiptCash,
-        totalAmount: receiptTotal,
-        changeAmount: receiptCash - receiptTotal,
-        transactedAt: receiptTime,
+        customerName: _customerNameController.text.isNotEmpty
+            ? _customerNameController.text
+            : null,
+        customerAddress: _customerAddressController.text.isNotEmpty
+            ? _customerAddressController.text
+            : null,
+        amountPayed: cash,
+        totalAmount: purchaseState.totalPrice,
+        changeAmount: cash - purchaseState.totalPrice,
+        transactedAt: DateTime.now().toIso8601String(),
       );
 
-      // Build line items from the purchase state snapshot.
-      final transactionItems = receiptItems
-          .map(
-            (item) => TransactionItems(
-              transactionId: receiptTxnId,
-              productsId: item.product.id!,
-              name: item.product.name,
-              barcode: item.product.barcode,
-              unitPrice: item.product.sellingPrice,
-              originalPrice: item.product.originalPrice,
-              quantity: item.quantity,
-              subtotal: item.subtotal,
-            ),
-          )
-          .toList();
+      await db.insertTransaction(transaction);
 
-      // Single atomic call: inserts transaction, validates live stock,
-      // decrements inventory, inserts all line items — or rolls back entirely.
-      await db.checkoutTransaction(
-        transaction: transaction,
-        items: transactionItems,
-      );
+      for (final item in purchaseState.items.values) {
+        // original price snapshot at the moment of sale
+        final transactionItem = TransactionItems(
+          transactionId: transactionId!,
+          productsId: item.product.id!,
+          name: item.product.name,
+          barcode: item.product.barcode,
+          unitPrice: item.product.sellingPrice,
+          originalPrice: item.product.originalPrice, // snapshot
+          quantity: item.quantity,
+          subtotal: item.subtotal,
+        );
+        await db.insertTransactionItem(transactionItem);
 
-      // Refresh inventory state to reflect decremented stock.
-      await ref.read(inventoryProvider.notifier).refresh();
+        final updatedProduct = Product(
+          id: item.product.id,
+          userId: item.product.userId,
+          name: item.product.name,
+          quantity: item.product.quantity - item.quantity,
+          sellingPrice: item.product.sellingPrice,
+          originalPrice: item.product.originalPrice,
+          productType: item.product.productType,
+          expiryDate: item.product.expiryDate,
+          barcode: item.product.barcode,
+          description: item.product.description,
+          imagePath: item.product.imagePath,
+        );
+        await inventoryNotifier.updateProduct(updatedProduct);
+      }
 
-      // Clear the cart only after the DB commit succeeded.
       ref.read(purchaseProvider.notifier).clear();
 
       if (mounted) {
-        // Navigate first, then show the receipt over the new route.
         Navigator.pushNamedAndRemoveUntil(
           context,
           '/inventory',
           ModalRoute.withName('/'),
         );
 
+        // Show receipt dialog
         ShowReceiptBottomSheet(
           context,
-          receiptTxnId,
-          receiptItems,
-          receiptCash,
-          receiptTotal,
-          receiptTime,
-          receiptCustomer,
-          receiptAddress,
+          transactionId!,
+          purchaseState.items.values.toList(),
+          double.tryParse(_cashController.text) ?? 0,
+          purchaseState.totalPrice,
+          DateTime.now().toIso8601String(),
+          _customerNameController.text,
+          _customerAddressController.text,
           false,
           cs,
         );
 
+        // Show snackbar
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Purchase completed! Receipt saved'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } on InsufficientStockException catch (e) {
-      // Stock changed between cart-add and checkout (stale cart).
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: Text('Stock Unavailable'),
-            content: Text(
-              '"${e.productName}" only has ${e.available} unit(s) left, '
-              'but ${e.requested} were requested.\n\n'
-              'Please update the quantity and try again.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('OK'),
-              ),
-            ],
           ),
         );
       }
@@ -209,7 +191,11 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isProcessing = false);
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
     }
   }
 
