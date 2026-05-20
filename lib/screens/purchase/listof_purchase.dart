@@ -100,6 +100,10 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
       final user = ref.read(authProvider).value;
       if (user == null) throw Exception('User not authenticated');
 
+      // in case transaction id does not load during initial state
+      if (transactionId == null) {
+        _loadTransactionId();
+      }
       // Capture all receipt data BEFORE clearing state or navigating.
       final receiptItems = purchaseState.items.values.toList();
       final receiptTotal = purchaseState.totalPrice;
@@ -153,7 +157,7 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
         // Navigate first, then show the receipt over the new route.
         Navigator.pushNamedAndRemoveUntil(
           context,
-          '/inventory',
+          '/purchase',
           ModalRoute.withName('/'),
         );
 

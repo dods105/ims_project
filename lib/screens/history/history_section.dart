@@ -53,7 +53,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
   ];
 
   //date picker
-  final TextEditingController _dateController = TextEditingController();
   DateTime? _selectedDate = DateTime.now();
 
   @override
@@ -64,7 +63,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
 
   @override
   void dispose() {
-    _dateController.dispose();
     super.dispose();
   }
 
@@ -188,7 +186,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     if (picked != null) {
       setState(() {
         _selectedDate = picked;
-        _dateController.text = DateFormat('yyyy-MM-dd').format(picked);
         _calculateChartData(_transactions);
         _calculateProfit(_transactions, _allItemRows);
       });
@@ -486,7 +483,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
               child: Text(
                 value,
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: valueColor ?? textColor ?? Colors.grey,
                 ),
@@ -611,9 +608,10 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
         ? 1.0
         : chartData.reduce((a, b) => a > b ? a : b);
 
-    // Profit summary values for the card
-    final weeklyProfit = _profit.dailyProfit.fold(0.0, (a, b) => a + b);
-    final monthlyProfit = _profit.totalProfit;
+    // Profit for the selected date specifically (day index within its week).
+    final selDate = _selectedDate ?? DateTime.now();
+    final selDayIdx = selDate.weekday % 7; // Sun=0 … Sat=6
+    final selectedDateProfit = _profit.dailyProfit[selDayIdx];
 
     if (_isLoading) {
       return Scaffold(
@@ -736,8 +734,10 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                         width: 125,
                         height: 125,
                         child: _summaryCard(
-                          title: "",
-                          value: "₱${weeklyProfit.toStringAsFixed(0)}",
+                          title: _selectedDate != null
+                              ? DateFormat('MMM d').format(_selectedDate!)
+                              : 'Today',
+                          value: "₱${selectedDateProfit.toStringAsFixed(0)}",
                           subtitle: "Profit",
                           icon: Icons.trending_up,
                           valueColor: Colors.teal,

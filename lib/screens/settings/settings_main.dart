@@ -99,7 +99,7 @@ class _SettingsItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final surface = Theme.of(context).colorScheme.surface;
+    final cs = Theme.of(context).colorScheme;
 
     return Material(
       color: Colors.transparent,
@@ -109,9 +109,9 @@ class _SettingsItem extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           decoration: BoxDecoration(
-            color: surface,
+            color: cs.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppTheme.borderDefault),
+            border: Border.all(color: cs.primary.withOpacity(0.3)),
           ),
           child: Row(
             children: [

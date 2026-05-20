@@ -129,7 +129,6 @@ class DatabaseHelper {
         quantity INTEGER NOT NULL,
         expiry_date TEXT NOT NULL,
         type TEXT NOT NULL,
-       
         created_at TEXT NOT NULL,
         FOREIGN KEY(user_id) REFERENCES users(id)
       )
@@ -150,6 +149,30 @@ class DatabaseHelper {
         FOREIGN KEY (products_id) REFERENCES products(id)
       )
     ''');
+
+    await db.execute('''
+    CREATE TABLE categories (
+      id INTEGER PRIMARY KEY,
+      user_id INTEGER,
+      category_name TEXT NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    )
+  ''');
+
+    /*List<String> types = [
+      "DRINKS",
+      "FROZEN FOODS",
+      "CANNED GOODS",
+      "BAKERY",
+      "BISCUITS",
+      "SNACKS",
+      'TOILETRIES',
+      'CLEANING SUPPLIES',
+    ];
+
+    for (String type in types) {
+      await db.insert('categories', {'user_id': null, 'catergory_name': type});
+    }*/
   }
 
   Future<void> close() async {
@@ -239,7 +262,7 @@ class DatabaseHelper {
     // No meaningful User object to return — password is never held in memory.
   }
 
-  /// Saves a profile picture path to the users table.
+  //Saves a profile picture path to the users table.
   Future<void> saveProfilePic(int userId, String path) async {
     final db = await instance.database;
     await db.update(
@@ -250,7 +273,7 @@ class DatabaseHelper {
     );
   }
 
-  /// Retrieves the stored profile picture path, or null if none set.
+  // Retrieves the stored profile picture path, or null if none set.
   Future<String?> getProfilePic(int userId) async {
     final db = await instance.database;
     final result = await db.query(
@@ -265,6 +288,36 @@ class DatabaseHelper {
   }
 
   //all about products
+
+  Future<List<String>> getCategoryNames(int userId) async {
+    final db = await instance.database;
+    final List<Map<String, dynamic>> result = await db.query(
+      'categories',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      orderBy: 'category_name ASC',
+    );
+
+    return result.map((map) => map['category_name'] as String).toList();
+  }
+
+  Future<void> insertCustomCategory(int userId, String categoryName) async {
+    final db = await instance.database;
+
+    // Check if it already exists globally or for this specific user
+    final existing = await db.query(
+      'categories',
+      where: '(user_id = ? OR user_id IS NULL) AND UPPER(category_name) = ?',
+      whereArgs: [userId, categoryName.trim()],
+    );
+
+    if (existing.isEmpty) {
+      await db.insert('categories', {
+        'user_id': userId, // Ties it specifically to this user's account
+        'category_name': categoryName.trim(),
+      });
+    }
+  }
 
   // for adding prod only (Adding page)
   Future<void> insertOrUpdateProduct(Product product) async {
@@ -477,26 +530,52 @@ class DatabaseHelper {
 
   Future<void> checkAndProcessExpiry(int userId) async {
     final db = await database;
-    final today = DateTime.now();
-    final todayStr = DateFormat('yyyy-MM-dd').format(today);
-    final in7Days = DateFormat(
-      'yyyy-MM-dd',
-    ).format(today.add(const Duration(days: 7)));
-    final now = today.toIso8601String();
+    final nowFull = DateTime.now();
+    // Midnight today — all comparisons are date-only, no time component.
+    final today = DateTime(nowFull.year, nowFull.month, nowFull.day);
+    final in7Days = today.add(const Duration(days: 7));
+    final nowIso = nowFull.toIso8601String();
+    final todayStr = DateFormat('MM-dd-yyyy').format(today);
 
-    // expired products
-    final expired = await db.query(
+    // Fetch every product that has an expiry date.
+    // We filter in Dart instead of using SQL string comparisons because the
+    // stored format is MM-dd-yyyy, which SQLite's < / > operators compare
+    // alphabetically — giving completely wrong results (e.g. '05-20-2025'
+    // evaluates as less-than '12-31-2024').
+    final allWithExpiry = await db.query(
       'products',
-      where:
-          'user_id = ? AND expiry_date IS NOT NULL AND expiry_date != "" AND expiry_date <= ?',
-      whereArgs: [userId, todayStr],
+      where: "user_id = ? AND expiry_date IS NOT NULL AND expiry_date != ''",
+      whereArgs: [userId],
     );
 
-    // Expired Items
-    for (final p in expired) {
+    final List<Map<String, dynamic>> expiredProducts = [];
+    final List<Map<String, dynamic>> expiringSoonProducts = [];
+
+    for (final p in allWithExpiry) {
+      final raw = p['expiry_date'] as String? ?? '';
+      DateTime expiry;
+      try {
+        final parsed = DateFormat('MM-dd-yyyy').parse(raw);
+        // Normalise to midnight so comparisons are date-only.
+        expiry = DateTime(parsed.year, parsed.month, parsed.day);
+      } catch (_) {
+        continue; // Skip rows with unparseable dates.
+      }
+
+      if (expiry.isBefore(today)) {
+        // Expiry date is strictly before today → the product is expired.
+        // (e.g. expiry = May 20, today = May 21 → expired)
+        expiredProducts.add(p);
+      } else if (!expiry.isAfter(in7Days)) {
+        // Expiry is today or within the next 7 days → expiring soon.
+        // (e.g. expiry = May 20, today = May 20 → notify; expiry = May 27 → notify)
+        expiringSoonProducts.add(p);
+      }
+    }
+
+    // ── Process expired products ────────────────────────────────────────────
+    for (final p in expiredProducts) {
       // Guard: only insert into expired_products if not already there.
-      // (Prevents duplicates if checkAndProcessExpiry runs twice before
-      // the product row is fully deleted, e.g. due to a crash mid-run.)
       final alreadyMoved = await db.query(
         'expired_products',
         columns: ['id'],
@@ -506,7 +585,6 @@ class DatabaseHelper {
       );
 
       if (alreadyMoved.isEmpty) {
-        // Move product to expired_products
         await db.insert('expired_products', {
           'user_id': p['user_id'],
           'name': p['name'],
@@ -521,7 +599,7 @@ class DatabaseHelper {
         });
       }
 
-      // search notif table
+      // Insert an 'expired' notification if one doesn't exist yet.
       final alreadyNotified = await db.query(
         'notifications',
         where:
@@ -529,7 +607,6 @@ class DatabaseHelper {
         whereArgs: [userId, p['name'], p['expiry_date']],
       );
       if (alreadyNotified.isEmpty) {
-        // create notif if doesnt exist yet
         await db.insert('notifications', {
           'user_id': userId,
           'product_id': p['id'],
@@ -537,24 +614,16 @@ class DatabaseHelper {
           'quantity': p['quantity'],
           'expiry_date': p['expiry_date'],
           'type': 'expired',
-
-          'created_at': now,
+          'created_at': nowIso,
         });
       }
 
-      // Remove from inventory
+      // Remove from live inventory.
       await db.delete('products', where: 'id = ?', whereArgs: [p['id']]);
     }
 
-    //  Find products expiring in 1 week
-    final expiringSoon = await db.query(
-      'products',
-      where:
-          'user_id = ? AND expiry_date IS NOT NULL AND expiry_date != "" AND expiry_date > ? AND expiry_date <= ?',
-      whereArgs: [userId, todayStr, in7Days],
-    );
-
-    for (final p in expiringSoon) {
+    // ── Process expiring-soon products ──────────────────────────────────────
+    for (final p in expiringSoonProducts) {
       final alreadyNotified = await db.query(
         'notifications',
         where:
@@ -569,13 +638,12 @@ class DatabaseHelper {
           'quantity': p['quantity'],
           'expiry_date': p['expiry_date'],
           'type': 'expiringSoon',
-
-          'created_at': now,
+          'created_at': nowIso,
         });
       }
     }
 
-    // Check for low stock and out of stock products
+    // ── Process low-stock / out-of-stock ────────────────────────────────────
     final allProducts = await db.query(
       'products',
       where: 'user_id = ?',
@@ -604,7 +672,7 @@ class DatabaseHelper {
             'expiry_date': noExpiry,
             'type': 'outOfStock',
 
-            'created_at': now,
+            'created_at': nowIso,
           });
         }
       } else if (qty <= 5) {
@@ -623,7 +691,7 @@ class DatabaseHelper {
             'expiry_date': noExpiry,
             'type': 'lowStock',
 
-            'created_at': now,
+            'created_at': nowIso,
           });
         } else {
           await db.update(
@@ -657,7 +725,7 @@ class DatabaseHelper {
       final db = await instance.database;
       final result = await db.rawQuery(
         '''
-    SELECT COUNT(*) as count 
+    SELECT COUNT(*) as count
     FROM transaction_items
     WHERE transaction_id = ?
     ''',
@@ -695,9 +763,7 @@ class DatabaseHelper {
   // Returns a human-readable, collision-proof transaction ID.
   // Format: yyyyMMdd-H-XAM/PM-mmmuuu
   //   mmm = milliseconds (000-999), uuu = microsecond remainder (000-999)
-  // Using wall-clock sub-milliseconds instead of a count-based sequence
-  // prevents collisions when the same ID is generated more than once in an hour
-  // (e.g. after a deleted transaction, or two rapid back-to-back checkouts).
+
   Future<String> generateTransactionId(int userId) async {
     final now = DateTime.now();
     final db = await instance.database;

@@ -9,7 +9,13 @@ import '../../providers/inventoryProvider.dart';
 import 'edit_form.dart';
 
 // Sort options
-enum _SortMode { nameAZ, stockHighLow, expiryNearFar, groupByType }
+enum _SortMode {
+  nameAZ,
+  stockHighLow,
+  expiryNearFar,
+  groupByType,
+  stockLowHigh,
+}
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -21,7 +27,7 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
-  _SortMode _sortMode = _SortMode.nameAZ;
+  _SortMode _sortMode = _SortMode.groupByType;
 
   @override
   void initState() {
@@ -53,6 +59,9 @@ class _HomePageState extends ConsumerState<HomePage> {
       case _SortMode.stockHighLow:
         list.sort((a, b) => b.quantity.compareTo(a.quantity));
         break;
+      case _SortMode.stockLowHigh:
+        list.sort((a, b) => a.quantity.compareTo(b.quantity));
+        break;
       case _SortMode.expiryNearFar:
         list.sort((a, b) {
           if (a.expiryDate == null && b.expiryDate == null) return 0;
@@ -78,30 +87,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     if (qty == 0) return AppTheme.textRed;
     if (qty <= 10 && qty > 0) return Colors.amber;
     return AppTheme.textGreen;
-  }
-
-  // Delete confirm dialog
-  void _confirmDelete(Product product) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Delete Product?'),
-        content: Text('Remove "${product.name}" from inventory?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ref.read(inventoryProvider.notifier).deleteProduct(product.id!);
-            },
-            child: Text('Delete', style: TextStyle(color: AppTheme.textRed)),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -164,32 +149,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-
-          SizedBox(height: 12),
-
-          // Column headers + sort popup
-          Padding(
-            padding: EdgeInsets.fromLTRB(28, 0, 12, 6),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Text('NAME', style: AppTheme.titleSmall),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text('STOCKS', style: AppTheme.titleSmall),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text('PRICE', style: AppTheme.titleSmall),
-                ),
-                // ort popup menu
                 PopupMenuButton<_SortMode>(
                   icon: Icon(
+                    size: 20,
                     Icons.filter_list,
                     color: _sortMode != _SortMode.nameAZ
                         ? AppTheme.brandBlue
@@ -204,12 +166,37 @@ class _HomePageState extends ConsumerState<HomePage> {
                   itemBuilder: (_) => [
                     _sortItem(_SortMode.nameAZ, 'Alphabetical (A–Z)'),
                     _sortItem(_SortMode.stockHighLow, 'Stock (High → Low)'),
+                    _sortItem(_SortMode.stockLowHigh, 'Stock (Low → High)'),
                     _sortItem(
                       _SortMode.expiryNearFar,
                       'Expiry (Nearest Expiration)',
                     ),
                     _sortItem(_SortMode.groupByType, 'Group by Type'),
                   ],
+                ),
+              ],
+            ),
+          ),
+
+          SizedBox(height: 12),
+
+          // Column headers + sort popup
+          Padding(
+            padding: EdgeInsets.fromLTRB(24, 0, 24, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Text('NAME', style: AppTheme.titleSmall),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Text('STOCKS', style: AppTheme.titleSmall),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  flex: 1,
+                  child: Text('PRICE', style: AppTheme.titleSmall),
                 ),
               ],
             ),
@@ -296,7 +283,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  // Helper: sort menu item with active checkmark
+  // sort menu item with active checkmark
   PopupMenuItem<_SortMode> _sortItem(_SortMode mode, String label) {
     final isActive = _sortMode == mode;
     return PopupMenuItem<_SortMode>(
@@ -316,101 +303,87 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _productTile(Product product, ColorScheme cs) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Material(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-          child: Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: Text(
-                  product.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: true,
-                  style: AppTheme.bodyMedium,
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Center(
-                  child: Text(
-                    '${product.quantity}',
-                    style: AppTheme.bodyMedium.copyWith(
-                      color: _stockColor(product.quantity),
-                      fontWeight: FontWeight(1000),
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  '₱${product.sellingPrice.toStringAsFixed(2)}',
-                  style: AppTheme.bodyMedium,
-                ),
-              ),
-
-              //Product action popup menu
-              PopupMenuButton<String>(
-                icon: Icon(Icons.more_vert, size: 18),
-                tooltip: 'Options',
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => DraggableScrollableSheet(
+            initialChildSize: 0.65,
+            minChildSize: 0.5,
+            maxChildSize: 0.9,
+            builder: (_, scrollController) => Container(
+              decoration: BoxDecoration(
                 color: cs.surface,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                onSelected: (value) {
-                  if (value == 'edit') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => EditProductPage(product: product),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: EditProductPage(
+                product: product,
+                scrollController: scrollController,
+              ),
+            ),
+          ),
+        );
+      },
+      child: SizedBox(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: Material(
+            color: cs.surface,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          product.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: true,
+                          style: AppTheme.bodyMedium,
+                        ),
                       ),
-                    );
-                  } else if (value == 'delete') {
-                    _confirmDelete(product);
-                  }
-                },
-                itemBuilder: (_) => [
-                  PopupMenuItem<String>(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.edit_outlined,
-                          size: 18,
-                          color: AppTheme.textMuted,
+                      Expanded(
+                        flex: 1,
+                        child: Center(
+                          child: Text(
+                            '${product.quantity}',
+                            style: AppTheme.bodyMedium.copyWith(
+                              color: _stockColor(product.quantity),
+                              fontWeight: FontWeight(1000),
+                              fontSize: 15,
+                            ),
+                          ),
                         ),
-                        SizedBox(width: 10),
-                        Text('Edit'),
-                      ],
-                    ),
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        flex: 1,
+                        child: Text(
+                          '₱${product.sellingPrice.toStringAsFixed(2)}',
+                          style: AppTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
                   ),
-                  PopupMenuItem<String>(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.delete_outline,
-                          size: 18,
-                          color: AppTheme.textRed,
-                        ),
-                        SizedBox(width: 10),
-                        Text(
-                          'Delete',
-                          style: TextStyle(color: AppTheme.textRed),
-                        ),
-                      ],
+                  SizedBox(height: 5),
+                  Text(
+                    product.expiryDate == null
+                        ? 'No expiration date'
+                        : 'Expiration Date: ${product.expiryDate}',
+                    style: AppTheme.bodySmall.copyWith(
+                      color: AppTheme.textMuted,
                     ),
                   ),
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ),

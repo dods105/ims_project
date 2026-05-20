@@ -1,20 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'themes.dart';
+import '../providers/inventoryProvider.dart';
 
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends ConsumerWidget {
   final String page;
   const AppDrawer({super.key, required this.page});
 
   @override
-  Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.sizeOf(context).height;
-    final isShortScreen = screenHeight < 600;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final inventoryState = ref.watch(inventoryProvider);
 
-    final double avatarRadius = isShortScreen ? 36 : 60;
-    final double headerVerticalPadding = isShortScreen ? 14 : 30;
+    // Get notification count
+    int notificationCount = 0;
+    inventoryState.when(
+      data: (state) {
+        notificationCount = state.notifications.length;
+      },
+      loading: () {},
+      error: (_, __) {},
+    );
 
     return Drawer(
-      width: MediaQuery.sizeOf(context).width * 0.65,
+      //width: MediaQuery.sizeOf(context).width * 0.65,
+      width: 225,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(60),
@@ -27,7 +36,7 @@ class AppDrawer extends StatelessWidget {
           child: Column(
             children: [
               Padding(
-                padding: EdgeInsets.symmetric(vertical: headerVerticalPadding),
+                padding: EdgeInsets.symmetric(vertical: 30),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -35,13 +44,12 @@ class AppDrawer extends StatelessWidget {
                       backgroundImage: const AssetImage(
                         'assets/images/godzilla.gif',
                       ),
-                      radius: avatarRadius,
+                      radius: 60,
                       backgroundColor: AppTheme.primaryBlue.withValues(
                         alpha: 0.2,
                       ),
                     ),
                     const SizedBox(height: 14),
-                    // FittedBox prevents title from overflowing on narrow drawers
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
@@ -91,7 +99,6 @@ class AppDrawer extends StatelessWidget {
                       route: '/inventory',
                       page: page,
                     ),
-
                     _NavItem(
                       icon: Icons.shopping_cart,
                       label: 'PURCHASE',
@@ -104,11 +111,11 @@ class AppDrawer extends StatelessWidget {
                       route: '/history',
                       page: page,
                     ),
-                    _NavItem(
-                      icon: Icons.notifications,
+                    _NavItemWithCount(
                       label: 'NOTIFICATION',
                       route: '/notification',
                       page: page,
+                      count: notificationCount,
                     ),
                   ],
                 ),
@@ -121,7 +128,7 @@ class AppDrawer extends StatelessWidget {
                 page: page,
               ),
 
-              SizedBox(height: isShortScreen ? 16 : 40),
+              SizedBox(height: 40),
             ],
           ),
         ),
@@ -162,7 +169,6 @@ class _NavItem extends StatelessWidget {
           }
         },
         child: Container(
-          // Use horizontal padding that won't overflow on narrow drawers
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             gradient: active
@@ -175,7 +181,6 @@ class _NavItem extends StatelessWidget {
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
-
             children: [
               Flexible(
                 child: Text(
@@ -189,6 +194,85 @@ class _NavItem extends StatelessWidget {
               Icon(icon, size: 22, color: AppTheme.grey300),
               const SizedBox(width: 4),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItemWithCount extends StatelessWidget {
+  final String label;
+  final String route;
+  final String page;
+  final int count;
+
+  const _NavItemWithCount({
+    required this.label,
+    required this.route,
+    required this.page,
+    required this.count,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool active = page == route;
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 25, top: 4, bottom: 4),
+      child: InkWell(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(10),
+          bottomLeft: Radius.circular(10),
+        ),
+        onTap: () {
+          Navigator.pushReplacementNamed(context, route);
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            gradient: active
+                ? AppTheme.drawerHighlight.withOpacity(0.7)
+                : AppTheme.surfaceGradient.withOpacity(0.5),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(10),
+              bottomLeft: Radius.circular(10),
+            ),
+          ),
+
+          child: Flexible(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  label,
+                  style: AppTheme.drawerText,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                SizedBox(width: 5),
+                if (count > 0)
+                  Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryBlue,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      count > 99 ? '99+' : (count > 0 ? '$count' : '0'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

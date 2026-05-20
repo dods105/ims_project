@@ -16,7 +16,7 @@ class AppTheme {
   static const Color cancelIconBg = Color(0xFFFFF7ED);
   static const Color deleteKeyBg = Color(0xFFFEF2F2);
 
-  //  Dark Mode Backgrounds
+  //  Dark Mode
   static const Color nightBlue = Color.fromARGB(255, 76, 128, 240);
   static const Color darkBackground = Color(0xFF0D1B2E);
   static const Color darkSurface = Color(0xFF162032);
@@ -154,10 +154,10 @@ class AppTheme {
 
   // drawerText dark blue bg white
   static const TextStyle drawerText = TextStyle(
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: FontWeight.w600,
     color: offWhite,
-    letterSpacing: 1.2,
+    letterSpacing: 1.1,
   );
 
   static TextStyle get pageTitleLight => displayMedium.copyWith(color: white);

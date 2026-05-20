@@ -5,7 +5,7 @@ class Product {
   final int quantity;
   final double sellingPrice;
   final double? originalPrice;
-  final String? productType;
+  final String productType;
   final String? expiryDate;
   final String? barcode;
   final String? description;
@@ -18,7 +18,7 @@ class Product {
     required this.quantity,
     required this.sellingPrice,
     this.originalPrice,
-    this.productType,
+    required this.productType,
     this.expiryDate,
     this.barcode,
     this.description,

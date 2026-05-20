@@ -3,9 +3,10 @@ import 'package:flutter_application_1/models/products/products.dart';
 import 'package:flutter_application_1/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../database/database_helper.dart';
 import '../../designs/drawer.dart';
 import '../../designs/appbar.dart';
-import 'package:image_picker/image_picker.dart'; // Add new logic function
+import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../designs/themes.dart';
 import '../../providers/inventoryProvider.dart';
@@ -25,13 +26,20 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
   final TextEditingController expiryController = TextEditingController();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController originalprice = TextEditingController();
-  final TextEditingController prodcuttypeController = TextEditingController();
   final TextEditingController qtyCtrl = TextEditingController();
   final TextEditingController srpController = TextEditingController();
 
+  // Controller for the inline-typeable type field.
+  final TextEditingController _typeController = TextEditingController();
+
+  // Keep this but it's no longer needed for a separate text field — the
+  // _typeController value is the single source of truth.
   String? productType;
+
+  // Whether the typed value is something not in the preset list.
   bool isProductTypeCustom = false;
-  final List<String> types = [
+
+  List<String> types = [
     "DRINKS",
     "FROZEN FOODS",
     "CANNED GOODS",
@@ -41,9 +49,36 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
     'TOILETRIES',
     'CLEANING SUPPLIES',
   ];
+  bool _isLoadingTypes = true;
+
+  // Overlay for the custom dropdown.
+  OverlayEntry? _overlayEntry;
+  final LayerLink _layerLink = LayerLink();
+  final FocusNode _typeFocusNode = FocusNode();
 
   String? _expiryDate;
   String? _imagePath;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCategories();
+    });
+    _typeFocusNode.addListener(() {
+      if (_typeFocusNode.hasFocus) {
+        _showTypeOverlay();
+      } else {
+        _removeTypeOverlay();
+        // Sync productType on blur.
+        final val = _typeController.text.trim().toUpperCase();
+        setState(() {
+          productType = val.isEmpty ? null : val;
+          isProductTypeCustom = val.isNotEmpty && !types.contains(val);
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -54,16 +89,297 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
     originalprice.dispose();
     srpController.dispose();
     expiryController.dispose();
-    prodcuttypeController.dispose();
+    _typeController.dispose();
+    _typeFocusNode.dispose();
+    _removeTypeOverlay();
     super.dispose();
   }
 
-  // triggred when add button is clicked
+  // ── Category loading ────────────────────────────────────────────────────
+
+  Future<void> _loadCategories() async {
+    final userId = ref.read(authProvider).value?.id;
+    if (userId != null) {
+      try {
+        final items = await DatabaseHelper.instance.getCategoryNames(userId);
+        if (mounted) {
+          setState(() {
+            final addedTypes = <String>[];
+            for (var item in items) {
+              if (!types.contains(item)) addedTypes.add(item);
+            }
+            addedTypes.sort();
+            types.addAll(addedTypes);
+            _isLoadingTypes = false;
+          });
+        }
+      } catch (_) {
+        if (mounted) setState(() => _isLoadingTypes = false);
+      }
+    } else {
+      if (mounted) setState(() => _isLoadingTypes = false);
+    }
+  }
+
+  // ── Custom overlay dropdown ─────────────────────────────────────────────
+
+  /// Returns filtered list based on current text input.
+  List<String> get _filteredTypes {
+    final query = _typeController.text.trim().toUpperCase();
+    if (query.isEmpty) return types;
+    return types.where((t) => t.contains(query)).toList();
+  }
+
+  void _showTypeOverlay() {
+    _removeTypeOverlay();
+    _overlayEntry = _buildOverlayEntry();
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _removeTypeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  void _refreshOverlay() {
+    if (_overlayEntry != null) {
+      _removeTypeOverlay();
+      _overlayEntry = _buildOverlayEntry();
+      Overlay.of(context).insert(_overlayEntry!);
+    }
+  }
+
+  OverlayEntry _buildOverlayEntry() {
+    final userId = ref.read(authProvider).value?.id;
+
+    return OverlayEntry(
+      builder: (context) {
+        // Read width inside the builder so it's always fresh (keyboard may
+        // have shifted layout since the overlay was first created).
+        double fieldWidth = 300;
+        final RenderBox? renderBox =
+            _typeFocusNode.context?.findRenderObject() as RenderBox?;
+        if (renderBox != null && renderBox.attached && renderBox.hasSize) {
+          fieldWidth = renderBox.size.width;
+        }
+
+        return Stack(
+          children: [
+            // Transparent barrier — tapping outside dismisses the dropdown.
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => _typeFocusNode.unfocus(),
+                behavior: HitTestBehavior.translucent,
+              ),
+            ),
+            // Dropdown anchored ABOVE the field via CompositedTransformFollower
+            // so it automatically repositions when the keyboard opens/closes.
+            CompositedTransformFollower(
+              link: _layerLink,
+              showWhenUnlinked: false,
+              targetAnchor: Alignment.topLeft,
+              followerAnchor: Alignment.bottomLeft,
+              offset: const Offset(0, -4),
+              child: SizedBox(
+                width: fieldWidth,
+                child: Material(
+                  elevation: 6,
+                  borderRadius: BorderRadius.circular(10),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 260),
+                    child: Builder(
+                      builder: (context) {
+                        final filtered = _filteredTypes;
+
+                        return ListView.builder(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) {
+                            final type = filtered[index];
+                            final isDefault = [
+                              "DRINKS",
+                              "FROZEN FOODS",
+                              "CANNED GOODS",
+                              "BAKERY",
+                              "BISCUITS",
+                              "SNACKS",
+                              "TOILETRIES",
+                              "CLEANING SUPPLIES",
+                            ].contains(type);
+
+                            return ListTile(
+                              dense: true,
+                              title: Text(type),
+                              trailing: !isDefault && userId != null
+                                  ? GestureDetector(
+                                      onTap: () =>
+                                          _deleteCustomCategory(type, userId),
+                                      child: const Icon(
+                                        Icons.delete_outline,
+                                        color: Colors.red,
+                                        size: 20,
+                                      ),
+                                    )
+                                  : null,
+                              onTap: () {
+                                _typeController.text = type;
+                                setState(() {
+                                  productType = type;
+                                  isProductTypeCustom = false;
+                                });
+                                _typeFocusNode.unfocus();
+                              },
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ── Category CRUD ────────────────────────────────────────────────────────
+
+  Future<void> _deleteCustomCategory(String categoryName, int userId) async {
+    _removeTypeOverlay();
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Category'),
+        content: Text(
+          'Are you sure you want to delete "$categoryName" from your categories?\n\n'
+          'Note: This will only remove the category from the list. '
+          'Products with this category will keep their type.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete == true && mounted) {
+      try {
+        final db = await DatabaseHelper.instance.database;
+        await db.delete(
+          'categories',
+          where: 'user_id = ? AND category_name = ?',
+          whereArgs: [userId, categoryName],
+        );
+        setState(() {
+          types.remove(categoryName);
+          if (productType == categoryName) {
+            productType = null;
+            _typeController.clear();
+          }
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Category "$categoryName" deleted successfully'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting category: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _saveCustomTypeIfNeeded(int userId) async {
+    if (!isProductTypeCustom ||
+        productType == null ||
+        productType!.trim().isEmpty)
+      return;
+
+    final db = await DatabaseHelper.instance.database;
+    final existing = await db.query(
+      'categories',
+      where: 'user_id = ? AND category_name = ?',
+      whereArgs: [userId, productType!.trim()],
+    );
+
+    if (existing.isEmpty) {
+      final shouldSave = await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Save New Category'),
+          content: Text(
+            'Do you want to save "${productType!}" to your categories list?\n\n'
+            'If you save it, you\'ll be able to select it from the dropdown next time.\n'
+            'If not, you\'ll need to type it again for future products.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop("no"),
+              child: const Text('No, Don\'t Save'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop("yes"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.brandBlue,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Yes, Save Category'),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldSave == "yes") {
+        await DatabaseHelper.instance.insertCustomCategory(
+          userId,
+          productType!.trim(),
+        );
+        if (!types.contains(productType)) {
+          setState(() => types.add(productType!));
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Category "${productType!}" saved!'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } else {
+      if (!types.contains(productType)) {
+        setState(() => types.add(productType!));
+      }
+    }
+  }
+
+  // ── Save product ─────────────────────────────────────────────────────────
 
   Future<void> savedproduct(int userId) async {
-    /* cheks if this have the required fields:
-   * name, quantity, original price and selling price
-   */
     if (nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -97,7 +413,6 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
       );
       return;
     }
-
     if (srpController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -110,12 +425,16 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
       return;
     }
 
-    /**
-     * Checks if barcode number exist in the database
-     * if it exists, check for the product name in the database and check the product name input
-     * compare if same. if it is prompt user to either:
-     *  - Change the existing product name to new one or keep the old one or close the promt
-     */
+    // Sync productType from controller (covers the case where the user typed
+    // without blurring before hitting Add).
+    final typedValue = _typeController.text.trim().toUpperCase();
+    if (typedValue.isNotEmpty) {
+      productType = typedValue;
+      isProductTypeCustom = !types.contains(typedValue);
+    }
+
+    await _saveCustomTypeIfNeeded(userId);
+
     final barcode = barcodeController.text.trim();
     if (barcode.isNotEmpty) {
       final existingBarcodeProduct = await ref
@@ -127,50 +446,38 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
         final newName = nameController.text.trim();
 
         if (existingName != newName) {
-          // null  = tapped outside (barrier)
-          // false = 'Close' button
-          // 'keep' = 'Keep Existing Name'
-          // 'change' = 'Change Product Name'
           final result = await showDialog<String>(
             context: context,
-            barrierDismissible: false, // force an explicit choice
-            builder: (context) {
-              return AlertDialog(
-                title: Text('Product Name Mismatch'),
-                content: Text(
-                  'Barcode $barcode is already used by product "$existingName"\n\nYou entered "$newName". Do you want to keep the existing name or change it?',
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              title: const Text('Product Name Mismatch'),
+              content: Text(
+                'Barcode $barcode is already used by "$existingName"\n\n'
+                'You entered "$newName". Keep the existing name or change it?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop('close'),
+                  child: const Text('Close'),
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop('close'),
-                    child: Text('Close'),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop('keep'),
+                  child: const Text('Keep Existing Name'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop('change'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.brandBlue,
+                    foregroundColor: Colors.white,
                   ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop('keep'),
-                    child: Text('Keep Existing Name'),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop('change'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.brandBlue,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: Text('Change Product Name'),
-                  ),
-                ],
-              );
-            },
+                  child: const Text('Change Product Name'),
+                ),
+              ],
+            ),
           );
 
-          // 'close', null (barrier tap), or anything unrecognised → cancel
-          if (result == null || result == 'close') {
-            return;
-          }
-
-          if (result == 'keep') {
-            nameController.text = existingName;
-          }
-          // 'change' → keep nameController as-is (user's new name)
+          if (result == null || result == 'close') return;
+          if (result == 'keep') nameController.text = existingName;
         }
       }
     }
@@ -181,7 +488,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
       quantity: int.tryParse(qtyCtrl.text) ?? 0,
       sellingPrice: double.tryParse(srpController.text) ?? 0.0,
       originalPrice: double.tryParse(originalprice.text) ?? 0.0,
-      productType: productType,
+      productType: productType?.trim() ?? "UNCATEGORIZED",
       expiryDate: _expiryDate,
       barcode: barcodeController.text.trim().isEmpty
           ? null
@@ -192,13 +499,6 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
       imagePath: _imagePath,
     );
 
-    /**
-     * Checks if product already exist in the database
-     * if it exists, update the quantity -> old quatity + new quantity
-     * if price change is detected (original or selling price):
-     * - ask to update the rest of the product price saved in the databaase
-     * - close the prompt, keepp old price, update price
-     */
     final duplicateProduct = await ref
         .read(inventoryProvider.notifier)
         .getExistingProduct(product);
@@ -209,60 +509,51 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
       final double newSell = product.sellingPrice;
       final double newOriginal = product.originalPrice ?? 0.0;
 
-      bool priceChange =
+      final bool priceChange =
           sellingPrice != newSell || originalPrice != newOriginal;
 
       if (priceChange) {
-        // 'update' = Yes, Update Price
-        // 'keep'   = No, Keep Old Price
-        // 'close' or null (barrier tap) = cancel entirely
         final result = await showDialog<String>(
           context: context,
-          barrierDismissible: false, // force an explicit choice
-          builder: (context) {
-            return AlertDialog(
-              title: const Text('Price Change Detected'),
-              content: const Text(
-                'This product already exists in your inventory with a different price.\n\n'
-                'Do you want to update the price for ALL existing stock of this product to the new price?',
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('Price Change Detected'),
+            content: const Text(
+              'This product already exists with a different price.\n\n'
+              'Do you want to update the price for ALL existing stock to the new price?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop('close'),
+                child: const Text(
+                  'Close',
+                  style: TextStyle(color: Colors.grey),
+                ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop('close'),
-                  child: const Text(
-                    'Close',
-                    style: TextStyle(color: Colors.grey),
-                  ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop('keep'),
+                child: const Text(
+                  'No, Keep Old Price',
+                  style: TextStyle(color: Colors.grey),
                 ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop('keep'),
-                  child: const Text(
-                    'No, Keep Old Price',
-                    style: TextStyle(color: Colors.grey),
-                  ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop('update'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.brandBlue,
                 ),
-                ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop('update'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.brandBlue,
-                  ),
-                  child: const Text(
-                    'Yes, Update Price',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                child: const Text(
+                  'Yes, Update Price',
+                  style: TextStyle(color: Colors.white),
                 ),
-              ],
-            );
-          },
+              ),
+            ],
+          ),
         );
 
-        // 'close', null (barrier tap), or anything unrecognised → cancel
-        if (result == null || result == 'close') {
-          return;
-        }
+        if (result == null || result == 'close') return;
 
         if (result == 'keep') {
-          // Restore the existing prices on the product object
           product = Product(
             userId: product.userId,
             name: product.name,
@@ -276,11 +567,9 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
             imagePath: product.imagePath,
           );
         }
-        // 'update' → product already holds the new prices, nothing to do
       }
     }
 
-    // ad or update product to the database
     await ref.read(inventoryProvider.notifier).addProduct(product);
 
     if (mounted) {
@@ -290,114 +579,102 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
           backgroundColor: AppTheme.textGreen,
         ),
       );
-
       Navigator.pushReplacementNamed(context, '/inventory');
     }
   }
+
+  // ── Image helpers ────────────────────────────────────────────────────────
 
   Future<void> _pickImage(ImageSource source) async {
     final path = await ref
         .read(inventoryProvider.notifier)
         .pickAndSaveImage(source);
-
-    if (path != null) {
-      setState(() {
-        _imagePath = path;
-      });
-    }
+    if (path != null) setState(() => _imagePath = path);
   }
 
-  void _removePhoto() {
-    setState(() {
-      _imagePath = null;
-    });
-  }
+  void _removePhoto() => setState(() => _imagePath = null);
 
-  // image choices
   void _showActionDialog() {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          title: Text('Upload Photo'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: Icon(Icons.camera_alt),
-                title: Text('Camera'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.camera);
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.photo),
-                title: Text('Gallery'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.gallery);
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.delete),
-                title: Text('Remove Photo'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _removePhoto();
-                },
-              ),
-            ],
-          ),
-        );
-      },
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text('Upload Photo'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Camera'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo),
+              title: const Text('Gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete),
+              title: const Text('Remove Photo'),
+              onTap: () {
+                Navigator.pop(context);
+                _removePhoto();
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  // expiration date selection
   Future<void> _selectDate() async {
-    DateTime? picked = await showDatePicker(
+    final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().add(Duration(days: 30)),
+      initialDate: DateTime.now().add(const Duration(days: 30)),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
     if (picked != null) {
       setState(() {
-        _expiryDate = DateFormat('yyyy-MM-dd').format(picked);
+        _expiryDate = DateFormat('MM-dd-yyyy').format(picked);
         expiryController.text = _expiryDate!;
       });
     }
   }
 
+  // ── Build ────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    // Use watch so the button reacts if auth state changes mid-session.
     final userId = ref.watch(authProvider).value?.id;
-    double screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: AppBarDesign(page: 'ADD PRODUCT'),
       endDrawer: const AppDrawer(page: '/adding'),
       body: SingleChildScrollView(
         child: Center(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(15.5, 20.0, 30.0, 40.0),
+            padding: const EdgeInsets.fromLTRB(15.5, 20.0, 30.0, 40.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start, // Horizontal center
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // LEFT SIDE (Upload UI)
+                    // ── LEFT: image upload ──────────────────────────
                     Expanded(
                       flex: 1,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(height: 25),
+                          const SizedBox(height: 25),
                           SizedBox(
                             height: 100,
                             width: double.infinity,
@@ -412,16 +689,12 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                                   blue: 0,
                                 ),
                                 foregroundColor: AppTheme.brandBlue,
-                                side: BorderSide(
-                                  color: AppTheme.brandBlue,
-                                ), // border
+                                side: BorderSide(color: AppTheme.brandBlue),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                              onPressed: () {
-                                _showActionDialog();
-                              },
+                              onPressed: _showActionDialog,
                               child: _imagePath != null
                                   ? ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
@@ -441,7 +714,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                                           size: 28.0,
                                           color: AppTheme.brandBlue,
                                         ),
-                                        SizedBox(height: 3),
+                                        const SizedBox(height: 3),
                                         Text(
                                           'Photo',
                                           style: TextStyle(
@@ -456,20 +729,19 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                       ),
                     ),
 
-                    SizedBox(width: 15),
+                    const SizedBox(width: 15),
 
-                    // RIGHT SIDE (Name + Description)
+                    // ── RIGHT: name + description ───────────────────
                     Expanded(
                       flex: 2,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('PRODUCT NAME'),
-                          SizedBox(height: 5),
+                          const Text('PRODUCT NAME'),
+                          const SizedBox(height: 5),
                           TextField(
                             controller: nameController,
                             textCapitalization: TextCapitalization.characters,
-
                             onChanged: (value) {
                               nameController.value = TextEditingValue(
                                 text: value.toUpperCase(),
@@ -478,23 +750,21 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                                 ),
                               );
                             },
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               border: OutlineInputBorder(
                                 borderSide: BorderSide(color: Colors.grey),
                               ),
                               hintText: 'Enter Product Name',
                             ),
                           ),
-
-                          SizedBox(height: 15),
-
-                          Text('DESCRIPTION'),
-                          SizedBox(height: 5),
+                          const SizedBox(height: 15),
+                          const Text('DESCRIPTION'),
+                          const SizedBox(height: 5),
                           TextField(
                             controller: descriptionController,
                             minLines: 1,
-                            maxLines: null, // makes description taller
-                            decoration: InputDecoration(
+                            maxLines: null,
+                            decoration: const InputDecoration(
                               border: OutlineInputBorder(
                                 borderSide: BorderSide(color: Colors.grey),
                               ),
@@ -506,18 +776,20 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                     ),
                   ],
                 ),
-                SizedBox(height: 20),
 
-                // barcode input
+                const SizedBox(height: 20),
+
+                // ── Barcode ───────────────────────────────────────────
                 TextField(
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   controller: barcodeController,
                   decoration: InputDecoration(
                     hintText: 'Barcode number...',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey),
+                      borderSide: const BorderSide(color: Colors.grey),
                     ),
-
                     suffixIcon: Transform.translate(
                       offset: const Offset(-6, 0),
                       child: Material(
@@ -532,7 +804,6 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                             await Future.delayed(
                               const Duration(milliseconds: 150),
                             );
-
                             final scannedBarcode = await Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -540,14 +811,12 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                                     const BarcodeScannerPage(),
                               ),
                             );
-
                             if (scannedBarcode != null) {
                               setState(() {
                                 barcodeController.text = scannedBarcode;
                               });
                             }
                           },
-
                           child: const SizedBox(
                             width: 30,
                             height: 30,
@@ -560,28 +829,28 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                     ),
                   ),
                 ),
-                SizedBox(height: 20.0),
+
+                const SizedBox(height: 20),
+
+                // ── Qty / Expiry labels ───────────────────────────────
                 Row(
                   children: [
                     SizedBox(
                       width: screenWidth / 2 - 50,
-                      child: Text('NO. OF ITEMS'),
+                      child: const Text('NO. OF ITEMS'),
                     ),
-
-                    SizedBox(width: 35.0),
-
+                    const SizedBox(width: 35),
                     SizedBox(
                       width: screenWidth / 2 - 50,
-                      child: Text('EXPIRATION DATE'),
+                      child: const Text('EXPIRATION DATE'),
                     ),
                   ],
                 ),
-                SizedBox(height: 5),
+                const SizedBox(height: 5),
 
-                // original price
+                // ── Qty / Expiry fields ───────────────────────────────
                 Row(
                   children: [
-                    // First TextField
                     Flexible(
                       child: TextField(
                         keyboardType: TextInputType.number,
@@ -589,7 +858,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                           FilteringTextInputFormatter.digitsOnly,
                         ],
                         controller: qtyCtrl,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: '0',
                           border: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
@@ -597,45 +866,45 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                         ),
                       ),
                     ),
-                    SizedBox(width: 10.0), // Second TextField
+                    const SizedBox(width: 10),
                     Flexible(
                       child: TextField(
                         controller: expiryController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Select Date',
-
                           prefixIcon: Icon(Icons.calendar_today),
                           border: OutlineInputBorder(),
                         ),
                         readOnly: true,
-                        onTap: () {
-                          _selectDate();
-                        },
+                        onTap: _selectDate,
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 15.0),
+
+                const SizedBox(height: 15),
+
+                // ── Price labels ──────────────────────────────────────
                 Row(
                   children: [
                     SizedBox(
                       width: screenWidth / 2 - 50,
-                      child: Text('ORG. PRICE'),
+                      child: const Text('ORG. PRICE'),
                     ),
-
-                    SizedBox(width: 35.0),
-
-                    SizedBox(width: screenWidth / 2 - 50, child: Text('SRP')),
+                    const SizedBox(width: 35),
+                    SizedBox(
+                      width: screenWidth / 2 - 50,
+                      child: const Text('SRP'),
+                    ),
                   ],
                 ),
 
-                // srp
+                // ── Price fields ──────────────────────────────────────
                 Row(
                   children: [
-                    // First TextField
                     Flexible(
                       child: TextField(
-                        keyboardType: TextInputType.numberWithOptions(
+                        keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
                         inputFormatters: [
@@ -644,7 +913,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                           ),
                         ],
                         controller: originalprice,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'P 00.0',
                           border: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
@@ -652,10 +921,10 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                         ),
                       ),
                     ),
-                    SizedBox(width: 10.0), // Second TextField
+                    const SizedBox(width: 10),
                     Flexible(
                       child: TextField(
-                        keyboardType: TextInputType.numberWithOptions(
+                        keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
                         inputFormatters: [
@@ -664,7 +933,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                           ),
                         ],
                         controller: srpController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'P 00.0',
                           fillColor: Colors.transparent,
                           border: OutlineInputBorder(
@@ -675,102 +944,97 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                     ),
                   ],
                 ),
-                SizedBox(height: 15),
 
-                // product type selection
-                Text('TYPE'),
-                SizedBox(height: 5),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    DropdownMenu<String>(
-                      width: double.infinity,
-                      // initialSelection: productType ?? types.first,
-                      enableFilter: true,
-                      requestFocusOnTap: false,
-                      onSelected: (String? newValue) {
-                        setState(() {
-                          if (newValue == "Other") {
-                            isProductTypeCustom = true;
-                            productType = null;
-                            prodcuttypeController.clear();
-                          } else {
-                            isProductTypeCustom = false;
-                            productType = newValue;
-                          }
-                        });
-                      },
-                      dropdownMenuEntries: [
-                        ...types.map(
-                          (type) => DropdownMenuEntry<String>(
-                            value: type,
-                            label: type,
-                          ),
+                const SizedBox(height: 15),
+
+                // ── Product TYPE — full-width typeable dropdown ────────
+                const Text('TYPE'),
+                const SizedBox(height: 5),
+                if (_isLoadingTypes)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Row(
+                      children: const [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         ),
-                        const DropdownMenuEntry<String>(
-                          value: "Other",
-                          label: "OTHER (TYPE MANUALLY)",
-                        ),
+                        SizedBox(width: 10),
+                        Text('Loading categories...'),
                       ],
                     ),
-
-                    if (isProductTypeCustom)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 10),
-                        child: TextField(
-                          controller: prodcuttypeController,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'[a-zA-Z ]'),
+                  )
+                else
+                  // Full-width TextField that drives a custom overlay list.
+                  CompositedTransformTarget(
+                    link: _layerLink,
+                    child: TextField(
+                      controller: _typeController,
+                      focusNode: _typeFocusNode,
+                      textCapitalization: TextCapitalization.characters,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z ]')),
+                        TextInputFormatter.withFunction((old, newVal) {
+                          final upper = newVal.text.toUpperCase();
+                          return newVal.copyWith(
+                            text: upper,
+                            selection: TextSelection.collapsed(
+                              offset: upper.length,
                             ),
-                            TextInputFormatter.withFunction((
-                              oldValue,
-                              newValue,
-                            ) {
-                              final upper = newValue.text.toUpperCase();
-
-                              return newValue.copyWith(
-                                text: upper,
-                                selection: TextSelection.collapsed(
-                                  offset: upper.length,
-                                ),
-                              );
-                            }),
+                          );
+                        }),
+                      ],
+                      onChanged: (_) {
+                        // Rebuild the overlay so the filtered list updates.
+                        _refreshOverlay();
+                        final val = _typeController.text.trim().toUpperCase();
+                        setState(() {
+                          productType = val.isEmpty ? null : val;
+                          isProductTypeCustom =
+                              val.isNotEmpty && !types.contains(val);
+                        });
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Select or type a category…',
+                        border: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        suffixIcon: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Clear button — only visible when there's text.
+                            if (_typeController.text.isNotEmpty)
+                              GestureDetector(
+                                onTap: () {
+                                  _typeController.clear();
+                                  setState(() {
+                                    productType = null;
+                                    isProductTypeCustom = false;
+                                  });
+                                  _refreshOverlay();
+                                },
+                                child: const Icon(Icons.clear, size: 18),
+                              ),
+                            const Icon(Icons.arrow_drop_down),
+                            const SizedBox(width: 4),
                           ],
-                          decoration: const InputDecoration(
-                            hintText: "Enter product type",
-                            border: OutlineInputBorder(),
-                          ),
-                          onChanged: (value) {
-                            productType = value.toUpperCase();
-                          },
                         ),
                       ),
-                  ],
-                ),
-                SizedBox(height: 20),
+                    ),
+                  ),
 
-                // add button
+                const SizedBox(height: 20),
+
+                // ── Add button ────────────────────────────────────────
                 Row(
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          if (userId == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Session expired. Please log in again.',
-                                ),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                            return;
-                          }
-                          savedproduct(userId);
-                        },
-                        icon: Icon(Icons.add, color: Colors.white),
-                        label: Text('Add'),
+                        onPressed: () => savedproduct(userId!),
+                        icon: const Icon(Icons.add, color: Colors.white),
+                        label: const Text('Add'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.brandBlue,
                           foregroundColor: Colors.white,
@@ -786,7 +1050,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
             ),
           ),
         ),
-      ), // left, top, right, bottom,),
+      ),
     );
   }
 }
