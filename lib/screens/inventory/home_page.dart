@@ -43,7 +43,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     super.dispose();
   }
 
-  // Filtering + sorting
+  // filter and sort pruct based on the chosen sort method
   List<Product> _apply(List<Product> products) {
     var list = _query.isEmpty
         ? List<Product>.from(products)
@@ -82,7 +82,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     return list;
   }
 
-  // Stock color
+  //Stock color
   Color _stockColor(int qty) {
     if (qty == 0) return AppTheme.textRed;
     if (qty <= 10 && qty > 0) return Colors.amber;
@@ -102,7 +102,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         children: [
           SizedBox(height: 16),
 
-          // Search bar
+          // Search bar and sort pop up
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -180,7 +180,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
           SizedBox(height: 12),
 
-          // Column headers + sort popup
+          // Column headers
           Padding(
             padding: EdgeInsets.fromLTRB(24, 0, 24, 8),
             child: Row(
@@ -302,6 +302,8 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
+  //ui per product on the product list
+  //product container
   Widget _productTile(Product product, ColorScheme cs) {
     return GestureDetector(
       onTap: () {

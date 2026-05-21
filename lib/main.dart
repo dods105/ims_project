@@ -31,7 +31,6 @@ class MainApp extends ConsumerWidget {
       themeMode: display.themeMode,
       theme: AppTheme.lightTheme(fontFamily: display.fontFamily),
       darkTheme: AppTheme.darkTheme(fontFamily: display.fontFamily),
-      // Display font size scales all text; theme uses base sizes (scale 1.0 inside ThemeData).
       builder: (context, child) {
         final mq = MediaQuery.of(context);
         return MediaQuery(

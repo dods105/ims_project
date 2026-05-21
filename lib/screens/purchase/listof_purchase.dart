@@ -104,7 +104,7 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
       if (transactionId == null) {
         _loadTransactionId();
       }
-      // Capture all receipt data BEFORE clearing state or navigating.
+      // load reciept before after checkout before clearing all previous info
       final receiptItems = purchaseState.items.values.toList();
       final receiptTotal = purchaseState.totalPrice;
       final receiptCash = cash;
@@ -124,7 +124,6 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
         transactedAt: receiptTime,
       );
 
-      // Build line items from the purchase state snapshot.
       final transactionItems = receiptItems
           .map(
             (item) => TransactionItems(
@@ -140,21 +139,21 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
           )
           .toList();
 
-      // Single atomic call: inserts transaction, validates live stock,
-      // decrements inventory, inserts all line items — or rolls back entirely.
+      // inserts transaction, validates stock,
+      // update inventory, and build inserts all transaction items to db
       await db.checkoutTransaction(
         transaction: transaction,
         items: transactionItems,
       );
 
-      // Refresh inventory state to reflect decremented stock.
+      //refresh inventory state to reflect updated stock.
       await ref.read(inventoryProvider.notifier).refresh();
 
-      // Clear the cart only after the DB commit succeeded.
+      //clear the selection on purchasse section after the saving to db
       ref.read(purchaseProvider.notifier).clear();
 
       if (mounted) {
-        // Navigate first, then show the receipt over the new route.
+        // go back to purcchase section, then show the receipt over the new route.
         Navigator.pushNamedAndRemoveUntil(
           context,
           '/purchase',
@@ -183,7 +182,7 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
         );
       }
     } on InsufficientStockException catch (e) {
-      // Stock changed between cart-add and checkout (stale cart).
+      //stock changed between cart-add and checkout
       if (mounted) {
         showDialog(
           context: context,

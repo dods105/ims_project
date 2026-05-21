@@ -9,7 +9,7 @@ import '../../providers/purchase_provider.dart';
 import '../../database/database_helper.dart';
 import '../../models/purchase/transaction_sale.dart';
 import '../../models/purchase/transaction_items.dart';
-import 'profit_computation.dart'; // ← adjust path if needed
+import 'profit_computation.dart';
 
 enum _ProfitView { weekly, monthly }
 
@@ -30,7 +30,8 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
   Map<String, int> _itemCounts = {};
   ProfitSummary _profit = ProfitSummary.empty;
 
-  // Weekly: Sun=0 … Sat=6  Monthly: Week1…Week5
+  // Weekly
+  // Sun=0 to Sat=6  Monthly: Week1 to Week5
   List<double> _weeklyData = List.filled(7, 0);
   List<double> _monthlyData = List.filled(5, 0);
 
@@ -66,8 +67,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     super.dispose();
   }
 
-  // ── data loading ──────────────────────────────────────────────────────────
-
   Future<void> _loadTransactions() async {
     setState(() => _isLoading = true);
     try {
@@ -76,11 +75,9 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
         final transactions = await DatabaseHelper.instance
             .getTransactionsByUser(user.id!);
 
-        // Single query for all item counts instead of one query per transaction.
         final Map<String, int> counts = await DatabaseHelper.instance
             .getItemCountsForUser(user.id!);
 
-        // JOIN rows for profit computation
         final allItemRows = await DatabaseHelper.instance
             .getTransactionItemsByUser(user.id!);
 
@@ -110,13 +107,12 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     }
   }
 
-  // ── chart data (sales, Sun–Sat week) ─────────────────────────────────────
-
+  //bar chart data for sales calculation
   void _calculateChartData(List<TransactionSale> transactions) {
     final dateToUse = _selectedDate ?? DateTime.now();
 
-    // Week: Sunday … Saturday
-    final daysSinceSunday = dateToUse.weekday % 7; // Sun=0, Mon=1 … Sat=6
+    // Week: Sunday ti Saturday
+    final daysSinceSunday = dateToUse.weekday % 7; // Sun=0, Mon=1, Sat=6
     final weekStart = DateTime(
       dateToUse.year,
       dateToUse.month,
@@ -138,7 +134,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
 
       // weekly (Sun–Sat)
       if (!d.isBefore(weekStart) && !d.isAfter(weekEnd)) {
-        final dayIdx = transDate.weekday % 7; // Sun=0 … Sat=6
+        final dayIdx = transDate.weekday % 7;
         _weeklyData[dayIdx] += trans.totalAmount;
       }
 
@@ -150,8 +146,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     }
   }
 
-  // ── profit data ───────────────────────────────────────────────────────────
-
   void _calculateProfit(
     List<TransactionSale> transactions,
     List<Map<String, dynamic>> allItemRows,
@@ -162,8 +156,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
       allItems: allItemRows,
     );
   }
-
-  // ── helpers ───────────────────────────────────────────────────────────────
 
   Future<void> _loadTransactionItems(String transactionId) async {
     try {
@@ -203,14 +195,13 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     }).toList();
   }
 
-  // The "current" bar is highlighted blue:
-  //   weekly  → today's day index (Sun=0…Sat=6) only if selected week == current week
-  //   monthly → current week-of-month index only if selected month == current month
+  //current day/week for barchart
+  //highlight to blue
   bool _isCurrentBar(int barIndex) {
     final now = DateTime.now();
     final sel = _selectedDate ?? now;
     if (isWeeklyActive) {
-      // Is the selected date in the same week as today?
+      //is the selected date in the same week as today?
       final daysSinceSundayNow = now.weekday % 7;
       final currentWeekStart = DateTime(
         now.year,
@@ -226,12 +217,14 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
       if (currentWeekStart != selWeekStart) return false;
       return barIndex == now.weekday % 7;
     } else {
-      // Same month?
+      //same month?
       if (sel.year != now.year || sel.month != now.month) return false;
       return barIndex == ((now.day - 1) / 7).floor().clamp(0, 4);
     }
   }
 
+  //if sales is 1000+, make it K
+  //sales is million, make it M
   String _formatBarLabel(double value) {
     if (value <= 0) return '';
     if (value >= 1000000) {
@@ -249,8 +242,8 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     return value.toInt().toString();
   }
 
-  // ── Profit bottom-sheet ───────────────────────────────────────────────────
-
+  //Profit bottom-sheet
+  //ui for profit when clicked
   void _showProfitSheet(ColorScheme cs) {
     showModalBottomSheet(
       context: context,
@@ -264,8 +257,8 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     );
   }
 
-  // ── Widgets ───────────────────────────────────────────────────────────────
-
+  //transactio list with tapping to open receipt
+  //and grand total saless
   List<Widget> _buildTransactions(
     List<TransactionSale> transactions,
     double grandTotal,
@@ -443,8 +436,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     ];
   }
 
-  // ── summary card ──────────────────────────────────────────────────────────
-
   static Widget _summaryCard({
     required String title,
     required String value,
@@ -504,8 +495,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     );
   }
 
-  // ── tab button ────────────────────────────────────────────────────────────
-
   Widget _tabButton({
     required String text,
     required bool active,
@@ -529,8 +518,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
       ),
     );
   }
-
-  // ── bar ───────────────────────────────────────────────────────────────────
 
   Widget _buildBarWithWidth(
     int index,
@@ -586,8 +573,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
       ],
     );
   }
-
-  // ── build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -752,7 +737,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
 
                 const SizedBox(height: 24),
 
-                // ── Bar chart container ────────────────────────────────────
+                // Bar chart container
                 SizedBox(
                   width: double.infinity,
                   child: Container(
@@ -808,7 +793,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
 
                         const SizedBox(height: 16),
 
-                        // Bar chart — fills full width dynamically
+                        // make bar chardt data fit dynamically
                         LayoutBuilder(
                           builder: (context, constraints) {
                             final totalBars = chartData.length;
@@ -850,7 +835,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
 
                 const SizedBox(height: 24),
 
-                // ── Transactions list & grand total ───────────────────────
+                //transactions list & grand total
                 ..._buildTransactions(filteredTransactions, grandTotal, cs),
               ],
             ),
@@ -861,10 +846,8 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Profit bottom-sheet  (W toggle | M toggle, mirrors the picture's table style)
-// ─────────────────────────────────────────────────────────────────────────────
-
+//data sheet for profit
+//both weekly and monthly
 class _ProfitSheet extends StatefulWidget {
   final DateTime selectedDate;
   final ProfitSummary profit;
@@ -936,7 +919,7 @@ class _ProfitSheetState extends State<_ProfitSheet> {
             ),
           ),
 
-          // title + W/M toggle
+          // title and W/M toggle
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -980,7 +963,7 @@ class _ProfitSheetState extends State<_ProfitSheet> {
 
           const SizedBox(height: 14),
 
-          // Table header
+          //table header
           _tableRow(
             label: 'Day',
             sales: 'Sales',
@@ -989,7 +972,8 @@ class _ProfitSheetState extends State<_ProfitSheet> {
             cs: cs,
           ),
 
-          // Table rows
+          //table rows
+          //weekly and monthly sales and profit
           ...List.generate(rowLabels.length, (i) {
             return _tableRow(
               label: rowLabels[i],
@@ -1000,7 +984,7 @@ class _ProfitSheetState extends State<_ProfitSheet> {
             );
           }),
 
-          // Totals
+          // Totals for sales and profit both weekly/monthly
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: _tableRow(

@@ -24,10 +24,8 @@ class DisplaySettings {
   );
 }
 
-//  Keys
 const _kThemeMode = 'display_theme_mode';
 const _kFontScale = 'display_font_scale';
-const _kFontFamily = 'display_font_family';
 
 //  Notifier
 class DisplayNotifier extends AsyncNotifier<DisplaySettings> {
@@ -36,7 +34,7 @@ class DisplayNotifier extends AsyncNotifier<DisplaySettings> {
     final prefs = await SharedPreferences.getInstance();
     final modeStr = prefs.getString(_kThemeMode) ?? 'light';
     final scale = prefs.getDouble(_kFontScale) ?? 0.88;
-    final font = prefs.getString(_kFontFamily) ?? 'Roboto';
+    final font = 'Roboto';
 
     return DisplaySettings(
       themeMode: _modeFromString(modeStr),
@@ -45,7 +43,6 @@ class DisplayNotifier extends AsyncNotifier<DisplaySettings> {
     );
   }
 
-  //  Setters
   Future<void> setThemeMode(ThemeMode mode) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kThemeMode, _modeToString(mode));
@@ -62,15 +59,6 @@ class DisplayNotifier extends AsyncNotifier<DisplaySettings> {
     );
   }
 
-  Future<void> setFontFamily(String family) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_kFontFamily, family);
-    state = AsyncData(
-      (state.value ?? const DisplaySettings()).copyWith(fontFamily: family),
-    );
-  }
-
-  //  Helpers
   static ThemeMode _modeFromString(String s) => switch (s) {
     'dark' => ThemeMode.dark,
     'system' => ThemeMode.system,
@@ -84,7 +72,7 @@ class DisplayNotifier extends AsyncNotifier<DisplaySettings> {
   };
 }
 
-//  Provider
+// provider
 final displayProvider = AsyncNotifierProvider<DisplayNotifier, DisplaySettings>(
   DisplayNotifier.new,
 );

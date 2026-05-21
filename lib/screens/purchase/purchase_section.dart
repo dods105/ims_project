@@ -256,7 +256,6 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
 
                     const SizedBox(height: 16),
 
-                    // Action buttons
                     Row(
                       children: [
                         Expanded(

@@ -19,8 +19,7 @@ class ProfileNotifier extends AsyncNotifier<String?> {
     state = AsyncData(await DatabaseHelper.instance.getProfilePic(userId));
   }
 
-  /// Picks an image from the gallery, copies it to the permanent app documents
-  /// directory, saves the path to the DB, and updates state.
+  //picks an image from the gallery, copies it to the app directory, saves the path to the DB, and updates state.
   Future<void> pickProfilePicture(int userId) async {
     final picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
@@ -28,8 +27,8 @@ class ProfileNotifier extends AsyncNotifier<String?> {
     );
     if (picked == null) return;
 
-    // Copy from OS temp/cache to permanent storage so the path survives
-    // app restarts and OS cache clears.
+    //copy from OS temp/cache to permanent storage so the path survives
+    //app restarts and OS cache clears.
     final appDir = await getApplicationDocumentsDirectory();
     final fileName = 'profile_$userId.jpg';
     final savedPath = p.join(appDir.path, fileName);

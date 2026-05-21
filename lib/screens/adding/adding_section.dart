@@ -29,21 +29,17 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
   final TextEditingController qtyCtrl = TextEditingController();
   final TextEditingController srpController = TextEditingController();
 
-  // Controller for the inline-typeable type field.
+  // product type field.
   final TextEditingController _typeController = TextEditingController();
-
-  // Keep this but it's no longer needed for a separate text field — the
-  // _typeController value is the single source of truth.
   String? productType;
 
-  // Whether the typed value is something not in the preset list.
+  //preset type.
   bool isProductTypeCustom = false;
 
   List<String> types = [
     "DRINKS",
     "FROZEN FOODS",
     "CANNED GOODS",
-    "BAKERY",
     "BISCUITS",
     "SNACKS",
     'TOILETRIES',
@@ -51,7 +47,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
   ];
   bool _isLoadingTypes = true;
 
-  // Overlay for the custom dropdown.
+  //overlay for the custom dropdown.
   OverlayEntry? _overlayEntry;
   final LayerLink _layerLink = LayerLink();
   final FocusNode _typeFocusNode = FocusNode();
@@ -70,7 +66,6 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
         _showTypeOverlay();
       } else {
         _removeTypeOverlay();
-        // Sync productType on blur.
         final val = _typeController.text.trim().toUpperCase();
         setState(() {
           productType = val.isEmpty ? null : val;
@@ -94,8 +89,6 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
     _removeTypeOverlay();
     super.dispose();
   }
-
-  // ── Category loading ────────────────────────────────────────────────────
 
   Future<void> _loadCategories() async {
     final userId = ref.read(authProvider).value?.id;
@@ -121,9 +114,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
     }
   }
 
-  // ── Custom overlay dropdown ─────────────────────────────────────────────
-
-  /// Returns filtered list based on current text input.
+  //returns filtered list of types based on text input.
   List<String> get _filteredTypes {
     final query = _typeController.text.trim().toUpperCase();
     if (query.isEmpty) return types;
@@ -154,8 +145,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
 
     return OverlayEntry(
       builder: (context) {
-        // Read width inside the builder so it's always fresh (keyboard may
-        // have shifted layout since the overlay was first created).
+        //live-read the text input and display corresponding type
         double fieldWidth = 300;
         final RenderBox? renderBox =
             _typeFocusNode.context?.findRenderObject() as RenderBox?;
@@ -165,15 +155,15 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
 
         return Stack(
           children: [
-            // Transparent barrier — tapping outside dismisses the dropdown.
+            // tap outside to dismiss the dropdown.
             Positioned.fill(
               child: GestureDetector(
                 onTap: () => _typeFocusNode.unfocus(),
                 behavior: HitTestBehavior.translucent,
               ),
             ),
-            // Dropdown anchored ABOVE the field via CompositedTransformFollower
-            // so it automatically repositions when the keyboard opens/closes.
+
+            //place dropdown above product type field
             CompositedTransformFollower(
               link: _layerLink,
               showWhenUnlinked: false,
@@ -201,7 +191,6 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                               "DRINKS",
                               "FROZEN FOODS",
                               "CANNED GOODS",
-                              "BAKERY",
                               "BISCUITS",
                               "SNACKS",
                               "TOILETRIES",
@@ -244,8 +233,6 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
       },
     );
   }
-
-  // ── Category CRUD ────────────────────────────────────────────────────────
 
   Future<void> _deleteCustomCategory(String categoryName, int userId) async {
     _removeTypeOverlay();
@@ -315,8 +302,9 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
   Future<void> _saveCustomTypeIfNeeded(int userId) async {
     if (!isProductTypeCustom ||
         productType == null ||
-        productType!.trim().isEmpty)
+        productType!.trim().isEmpty) {
       return;
+    }
 
     final db = await DatabaseHelper.instance.database;
     final existing = await db.query(
@@ -377,8 +365,6 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
     }
   }
 
-  // ── Save product ─────────────────────────────────────────────────────────
-
   Future<void> savedproduct(int userId) async {
     if (nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -425,8 +411,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
       return;
     }
 
-    // Sync productType from controller (covers the case where the user typed
-    // without blurring before hitting Add).
+    //check if product type is custom or already in the type list
     final typedValue = _typeController.text.trim().toUpperCase();
     if (typedValue.isNotEmpty) {
       productType = typedValue;
@@ -482,6 +467,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
       }
     }
 
+    //Product obejct creation
     var product = Product(
       userId: userId,
       name: nameController.text.trim(),
@@ -503,6 +489,8 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
         .read(inventoryProvider.notifier)
         .getExistingProduct(product);
 
+    //if product already exist, chack price if same or not
+    //if not show pop up regarding price change
     if (duplicateProduct != null && mounted) {
       final double sellingPrice = duplicateProduct.sellingPrice;
       final double originalPrice = duplicateProduct.originalPrice ?? 0.0;
@@ -553,6 +541,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
 
         if (result == null || result == 'close') return;
 
+        // keep old product price, dont update price
         if (result == 'keep') {
           product = Product(
             userId: product.userId,
@@ -582,8 +571,6 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
       Navigator.pushReplacementNamed(context, '/inventory');
     }
   }
-
-  // ── Image helpers ────────────────────────────────────────────────────────
 
   Future<void> _pickImage(ImageSource source) async {
     final path = await ref
@@ -647,8 +634,6 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
       });
     }
   }
-
-  // ── Build ────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -779,7 +764,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
 
                 const SizedBox(height: 20),
 
-                // ── Barcode ───────────────────────────────────────────
+                //Barcode
                 TextField(
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -832,7 +817,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
 
                 const SizedBox(height: 20),
 
-                // ── Qty / Expiry labels ───────────────────────────────
+                // Qty / Expiry labels
                 Row(
                   children: [
                     SizedBox(
@@ -848,7 +833,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                 ),
                 const SizedBox(height: 5),
 
-                // ── Qty / Expiry fields ───────────────────────────────
+                // Qty / Expiry fields
                 Row(
                   children: [
                     Flexible(
@@ -884,7 +869,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
 
                 const SizedBox(height: 15),
 
-                // ── Price labels ──────────────────────────────────────
+                // Price labels
                 Row(
                   children: [
                     SizedBox(
@@ -899,7 +884,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                   ],
                 ),
 
-                // ── Price fields ──────────────────────────────────────
+                // Price fields
                 Row(
                   children: [
                     Flexible(
@@ -947,9 +932,10 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
 
                 const SizedBox(height: 15),
 
-                // ── Product TYPE — full-width typeable dropdown ────────
+                // Product TYPE
                 const Text('TYPE'),
                 const SizedBox(height: 5),
+                //load produvt type from db
                 if (_isLoadingTypes)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10),
@@ -966,7 +952,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                     ),
                   )
                 else
-                  // Full-width TextField that drives a custom overlay list.
+                  //TextField with custom overlay list
                   CompositedTransformTarget(
                     link: _layerLink,
                     child: TextField(
@@ -986,7 +972,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                         }),
                       ],
                       onChanged: (_) {
-                        // Rebuild the overlay so the filtered list updates.
+                        //rebuild the overlay so filtered list update
                         _refreshOverlay();
                         final val = _typeController.text.trim().toUpperCase();
                         setState(() {
@@ -1004,7 +990,8 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                         suffixIcon: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Clear button — only visible when there's text.
+                            //clear button. only visible when there is text.
+                            // the x button
                             if (_typeController.text.isNotEmpty)
                               GestureDetector(
                                 onTap: () {
@@ -1027,7 +1014,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
 
                 const SizedBox(height: 20),
 
-                // ── Add button ────────────────────────────────────────
+                // Add button
                 Row(
                   children: [
                     Expanded(

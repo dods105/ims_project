@@ -30,7 +30,7 @@ class NotificationPage extends ConsumerWidget {
         body: const Center(child: Text('Error loading notifications')),
       ),
       data: (state) {
-        // Sort expired products by movedAt using the current sortOrder.
+        // Sort expired products by movedAt using the current sortOrder. either bi oldest or newest
         final sortedExpired = List<ExpiredProduct>.from(state.expiredProducts)
           ..sort((a, b) {
             final cmp = a.movedAt.compareTo(b.movedAt);
@@ -68,7 +68,7 @@ class NotificationPage extends ConsumerWidget {
             endDrawer: AppDrawer(page: '/notification'),
             body: Column(
               children: [
-                // ── Custom tab bar ──────────────────────────────────────
+                // Custom tab bar for exp soon, stocks, all and exp products
                 Container(
                   color: cs.surface,
                   padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
@@ -94,7 +94,7 @@ class NotificationPage extends ConsumerWidget {
 
                 const SizedBox(height: 20),
 
-                // ── Sort toggle ─────────────────────────────────────────
+                // Sort toggle ( newest / oldest )
                 Padding(
                   padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
                   child: Row(
@@ -145,25 +145,28 @@ class NotificationPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 10),
 
-                // ── Tab content ─────────────────────────────────────────
+                //tab content
                 Expanded(
                   child: TabBarView(
                     children: [
-                      // Expiring soon tab — no delete button
+                      // Expiring soon tab
+                      //no delete button
                       NotifList(
                         notifications: state.expiringSoon,
                         emptyMessage: 'No products expiring soon.',
                         onDelete: null,
                       ),
 
-                      // Low stock tab — no delete button
+                      // Low stock tab
+                      //no delete button
                       NotifList(
                         notifications: state.lowStockNotifications,
                         emptyMessage: 'All products are sufficiently stocked.',
                         onDelete: null,
                       ),
 
-                      // All notifications tab — delete only for outOfStock
+                      // All notifications tab
+                      //delete only for outOfStock
                       // and expired types
                       NotifList(
                         notifications: state.notifications,
@@ -182,7 +185,7 @@ class NotificationPage extends ConsumerWidget {
                         },
                       ),
 
-                      // Expired products tab — inventory-style tiles
+                      // Expired products tab
                       ExpiredList(
                         expiredProducts: sortedExpired,
                         onDelete: (id) => _confirmDeleteExpired(
@@ -201,8 +204,6 @@ class NotificationPage extends ConsumerWidget {
       },
     );
   }
-
-  // ── Delete dialogs ────────────────────────────────────────────────────────
 
   void _confirmDelete({
     required BuildContext context,
@@ -268,8 +269,8 @@ class NotificationPage extends ConsumerWidget {
   }
 }
 
-// ─── Tab info model ────────────────────────────────────────────────────────────
-
+// Tab info model for the tab navigation on top
+// title of tab, color selected indicator, and notification count
 class _TabInfo {
   final String label;
   final Color color;
@@ -281,8 +282,7 @@ class _TabInfo {
   });
 }
 
-// ─── Styled tab widget ─────────────────────────────────────────────────────────
-
+//styled tab widget
 class _StyledTab extends StatelessWidget {
   final _TabInfo info;
   const _StyledTab({required this.info});
@@ -321,13 +321,15 @@ class _StyledTab extends StatelessWidget {
   }
 }
 
-// ─── NotifList ─────────────────────────────────────────────────────────────────
+// NotifList
+// exp soon, stocks, and all tab content
 
 class NotifList extends StatelessWidget {
   final List<AppNotification> notifications;
   final String emptyMessage;
 
-  /// Null means no delete action is available for this tab.
+  //for delete on notification.
+  //only del for all tab content, and null for other notif
   final void Function(int id, {NotifType? type})? onDelete;
 
   const NotifList({
@@ -372,12 +374,14 @@ class NotifList extends StatelessWidget {
   }
 }
 
-// ─── NotifCard ─────────────────────────────────────────────────────────────────
+// NotifCard
+// ui for the notification container
 
 class NotifCard extends StatelessWidget {
   final AppNotification notification;
 
-  /// Null = no delete button shown.
+  //delete button show indicator
+  //if null dont show delete
   final VoidCallback? onDelete;
 
   const NotifCard({
@@ -501,7 +505,7 @@ class NotifCard extends StatelessWidget {
   }
 }
 
-// ─── ExpiredList ───────────────────────────────────────────────────────────────
+//ExpiredList
 
 class ExpiredList extends StatelessWidget {
   final List<ExpiredProduct> expiredProducts;
@@ -526,7 +530,6 @@ class ExpiredList extends StatelessWidget {
 
     return Column(
       children: [
-        // Column headers — mirrors the inventory page layout.
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 4),
           child: Row(
@@ -564,9 +567,7 @@ class ExpiredList extends StatelessWidget {
   }
 }
 
-// ─── _ExpiredTile ──────────────────────────────────────────────────────────────
-// Mirrors the inventory product tile style; tap opens a read-only info sheet.
-
+//ExpiredTile
 class _ExpiredTile extends StatelessWidget {
   final ExpiredProduct product;
   final VoidCallback onDelete;
@@ -584,7 +585,7 @@ class _ExpiredTile extends StatelessWidget {
         child: Material(
           color: cs.surface,
           borderRadius: BorderRadius.circular(12),
-          // Subtle red tint border to distinguish from live inventory.
+
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
@@ -608,6 +609,7 @@ class _ExpiredTile extends StatelessWidget {
                       style: AppTheme.bodyMedium,
                     ),
                   ),
+
                   // Qty
                   Expanded(
                     flex: 1,
@@ -665,8 +667,9 @@ class _ExpiredTile extends StatelessWidget {
   }
 }
 
-// ─── _ExpiredInfoSheet ─────────────────────────────────────────────────────────
+// _ExpiredInfoSheet
 // Read-only detail view shown when a user taps an expired product tile.
+//might delete later. dont put comments here
 
 class _ExpiredInfoSheet extends StatelessWidget {
   final ExpiredProduct product;

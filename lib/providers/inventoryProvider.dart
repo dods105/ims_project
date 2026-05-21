@@ -26,7 +26,6 @@ class InventoryState {
   });
 
   //filltered getters
-
   List<AppNotification> get expiringSoon =>
       notifications.where((n) => n.type == NotifType.expiringSoon).toList();
 
@@ -52,11 +51,9 @@ class InventoryState {
 }
 
 // Notifier
-
 class InventoryNotifier extends AsyncNotifier<InventoryState> {
   final _db = DatabaseHelper.instance;
 
-  // Preserve sort order across refreshes
   NotifSortOrder _sortOrder = NotifSortOrder.newestFirst;
 
   @override
@@ -91,7 +88,6 @@ class InventoryNotifier extends AsyncNotifier<InventoryState> {
     state = AsyncData(await _fetchAll(user.id!));
   }
 
-  // Toggles sort order and re fetches.
   Future<void> toggleSortOrder() async {
     _sortOrder = _sortOrder == NotifSortOrder.newestFirst
         ? NotifSortOrder.oldestFirst
@@ -135,25 +131,20 @@ class InventoryNotifier extends AsyncNotifier<InventoryState> {
     await refresh();
   }
 
-  // Expired operations
-
   Future<void> deleteExpiredProduct(int id) async {
     await _db.deleteExpiredProduct(id);
     await refresh();
   }
 
-  // Notification operations
-
-  // Deletes a notification.
-  // For expired type. removes the expired_product record.
-  // For outOfStock type. removes the zero-stock product record.
+  // deletes a notification.
+  // for expired type. remove expired_product record.
+  // for outOfStock type. remove zero-stock product record.
   Future<void> deleteNotification(int id) async {
     await _db.deleteNotification(id); // cascade logic is in DB layer
     await refresh();
   }
 
-  // Image picker
-
+  // image picker
   Future<String?> pickAndSaveImage(ImageSource source) async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: source, imageQuality: 80);
@@ -168,7 +159,6 @@ class InventoryNotifier extends AsyncNotifier<InventoryState> {
 }
 
 // Provider
-
 final inventoryProvider =
     AsyncNotifierProvider<InventoryNotifier, InventoryState>(
       InventoryNotifier.new,
