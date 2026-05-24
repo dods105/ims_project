@@ -36,3 +36,10 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/manual/adding/
+    - assets/manual/inventory/
+    - assets/manual/purchase/
+    - assets/manual/notification/
+    - assets/manual/setting/
+    - assets/manual/history/
+
