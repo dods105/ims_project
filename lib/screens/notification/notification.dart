@@ -10,9 +10,9 @@ import '../../providers/inventoryProvider.dart';
 
 // ============================================================================
 // OVERALL FUNCTIONALITY OF THE CLASS:
-// The 'NotificationPage' is a UI component that displays various types of 
-// inventory notifications (Expiring, Low Stock, All, and Expired). 
-// It utilizes Riverpod for reactive state management, enabling automatic 
+// The 'NotificationPage' is a UI component that displays various types of
+// inventory notifications (Expiring, Low Stock, All, and Expired).
+// It utilizes Riverpod for reactive state management, enabling automatic
 // data updates, and supports sorting (newest/oldest) and item deletion.
 // ============================================================================
 class NotificationPage extends ConsumerWidget {
@@ -51,7 +51,7 @@ class NotificationPage extends ConsumerWidget {
             // If sortOrder is set to newestFirst, reverse the comparison results.
             return state.sortOrder == NotifSortOrder.newestFirst ? -cmp : cmp;
           });
- // VARIABLES (Tab Configuration)
+        // VARIABLES (Tab Configuration)
         // Configuration list for tabs containing labels, colors, and current item counts.
         final tabs = [
           _TabInfo(
@@ -110,7 +110,7 @@ class NotificationPage extends ConsumerWidget {
                     ],
                   ),
                 ),
-                     const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
                 // WIDGET (Sort Toggle Button Layout)
                 // Clickable structural area handling list order modifications.
@@ -224,6 +224,7 @@ class NotificationPage extends ConsumerWidget {
       },
     );
   } // FUNCTION (Confirmation Dialog Trigger)
+
   // Generates and manages modal delete verification prompts contextually.
   void _confirmDelete({
     required BuildContext context,
@@ -295,7 +296,8 @@ class NotificationPage extends ConsumerWidget {
       ),
     );
   }
-}// DATA MODEL CLASS (Tab Information Structure)
+} // DATA MODEL CLASS (Tab Information Structure)
+
 // Blueprint tracking properties for tab title, selection colors, and badge item counts.
 class _TabInfo {
   final String label;
@@ -401,7 +403,8 @@ class NotifList extends StatelessWidget {
       },
     );
   }
-}// WIDGET (Notification Card Container layout view)
+} // WIDGET (Notification Card Container layout view)
+
 // Renders the specific styling rules for card cells within active lists.
 class NotifCard extends StatelessWidget {
   final AppNotification notification;
@@ -471,7 +474,9 @@ class NotifCard extends StatelessWidget {
     final dt = DateTime.tryParse(raw);
     if (dt == null) return raw;
     return DateFormat('MMM d, yyyy').format(dt);
-  } @override
+  }
+
+  @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
@@ -591,7 +596,8 @@ class ExpiredList extends StatelessWidget {
       ],
     );
   }
-}// WIDGET (Expired Product Individual Tile View)
+} // WIDGET (Expired Product Individual Tile View)
+
 // Formats individual rows representing a single expired item layout cell.
 class _ExpiredTile extends StatelessWidget {
   final ExpiredProduct product;
@@ -603,80 +609,75 @@ class _ExpiredTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
-    return GestureDetector(
-      // FUNCTIONALITY ON TAP
-      // Displays an information spreadsheet view overlay modal on interaction.
-      onTap: () => _showInfoSheet(context, cs),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        child: Material(
-          color: cs.surface,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppTheme.error.withOpacity(0.30),
-                width: 1.2,
-              ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Material(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.error.withOpacity(0.30),
+              width: 1.2,
             ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              child: Row(
-                children: [
-                  // Text Layout: Item Name Display
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      product.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: true,
-                      style: AppTheme.bodyMedium,
-                    ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            child: Row(
+              children: [
+                // Text Layout: Item Name Display
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    product.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: true,
+                    style: AppTheme.bodyMedium,
                   ),
+                ),
 
-                  // Text Layout: Item Quantity Display
-                  Expanded(
-                    flex: 1,
-                    child: Center(
-                      child: Text(
-                        '${product.quantity}',
-                        style: AppTheme.bodyMedium.copyWith(
-                          color: AppTheme.textRed.withOpacity(0.7),
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  
-                  // Text Layout: Item Expiry Date Display
-                  Expanded(
-                    flex: 2,
+                // Text Layout: Item Quantity Display
+                Expanded(
+                  flex: 1,
+                  child: Center(
                     child: Text(
-                      product.expiryDate,
+                      '${product.quantity}',
                       style: AppTheme.bodyMedium.copyWith(
-                        color: AppTheme.textMuted,
-                        fontSize: 12,
+                        color: AppTheme.textRed.withOpacity(0.7),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
                       ),
                     ),
                   ),
-                  
-                  // Action Item Button: Triggers item record deletion
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    icon: Icon(
-                      Icons.delete_outline,
-                      color: AppTheme.textRed,
-                      size: 20,
+                ),
+                const SizedBox(width: 8),
+
+                // Text Layout: Item Expiry Date Display
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    product.expiryDate,
+                    style: AppTheme.bodyMedium.copyWith(
+                      color: AppTheme.textMuted,
+                      fontSize: 12,
                     ),
-                    onPressed: onDelete,
                   ),
-                ],
-              ),
+                ),
+
+                // Action Item Button: Triggers item record deletion
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: Icon(
+                    Icons.delete_outline,
+                    color: AppTheme.textRed,
+                    size: 20,
+                  ),
+                  onPressed: onDelete,
+                ),
+              ],
             ),
           ),
         ),
@@ -684,92 +685,3 @@ class _ExpiredTile extends StatelessWidget {
     );
   }
 } // FUNCTION (Bottom Info Sheet Presenter)
-  // Displays a dynamic modal overlay layout block from the bottom of the active view context.
-  void _showInfoSheet(BuildContext context, ColorScheme cs) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => _ExpiredInfoSheet(product: product, cs: cs),
-    );
-  }
-} // _ExpiredInfoSheet
-// Read-only detail view shown when a user taps an expired product tile.
-//might delete later. dont put comments here
-
-class _ExpiredInfoSheet extends StatelessWidget {
-  final ExpiredProduct product;
-  final ColorScheme cs;
-
-  const _ExpiredInfoSheet({required this.product, required this.cs});
-
-  Widget _row(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 130,
-            child: Text(
-              label,
-              style: AppTheme.bodySmall.copyWith(color: AppTheme.textMuted),
-            ),
-          ),
-          Expanded(child: Text(value, style: AppTheme.bodyMedium)),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Handle bar
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'EXPIRED PRODUCT',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.brandBlueDeep,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-          const Divider(),
-          const SizedBox(height: 8),
-          _row('Product Name', product.name),
-          _row('Quantity', '${product.quantity} item(s)'),
-          _row('Expiry Date', product.expiryDate),
-        ],
-      ),
-    );
-  }
-}

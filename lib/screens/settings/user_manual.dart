@@ -17,13 +17,6 @@ class _StepData {
   });
 }
 
-class _TroubleshootData {
-  final String question;
-  final String answer;
-
-  const _TroubleshootData({required this.question, required this.answer});
-}
-
 final _gettingAroundSteps = [
   _StepData(
     title: 'Open the Navigation Menu',
@@ -59,8 +52,8 @@ final _addingSteps = [
     description:
         'Tap the photo box on the left side of the screen to upload an image.\n\n'
         'You can choose from:\n'
-        '• Camera — Take a photo on the spot.\n'
-        '• Gallery — Pick an existing photo from your device.\n\n'
+        '• Camera: Take a photo on the spot.\n'
+        '• Gallery: Pick an existing photo from your device.\n\n'
         'If prompted, tap "While using the app" to allow camera or photo access.',
     icon: Icons.add_photo_alternate_rounded,
     imagePath: 'assets/manual/adding/cam-access.png',
@@ -69,9 +62,9 @@ final _addingSteps = [
     title: 'Enter Product Details',
     description:
         'Fill in the basic information about your product:\n\n'
-        '• Product Name — The name of the item.\n'
-        '• Description — A short note about the product.\n'
-        '• Barcode Number — Type the barcode manually if needed.',
+        '• Product Name: The name of the item.\n'
+        '• Description: A short note about the product.\n'
+        '• Barcode Number: Type the barcode manually if needed.',
     icon: Icons.edit_note_rounded,
     imagePath: 'assets/manual/adding/name-des-bar.png',
   ),
@@ -79,7 +72,7 @@ final _addingSteps = [
     title: 'Scan a Barcode (Optional)',
     description:
         'Instead of typing, tap the barcode scanner icon on the right side of the barcode field.\n\n'
-        'Point your camera at the product\'s barcode and hold it steady — the app will automatically fill in the number for you.',
+        'Point your camera at the product\'s barcode and hold it steady and the app will automatically fill in the number for you.',
     icon: Icons.qr_code_scanner_rounded,
     imagePath: 'assets/manual/adding/barscan.png',
   ),
@@ -102,8 +95,8 @@ final _addingSteps = [
     title: 'Enter Pricing',
     description:
         'Fill in both price fields:\n\n'
-        '• Org. Price — What you paid for the product (your cost).\n'
-        '• SRP — The price you sell it to customers.',
+        '• Org. Price: What you paid for the product (your cost).\n'
+        '• SRP: The price you sell it to customers.',
     icon: Icons.price_change_rounded,
     imagePaths: [
       'assets/manual/adding/orig-price.png',
@@ -152,14 +145,14 @@ final _inventorySteps = [
   _StepData(
     title: 'View Product Information',
     description:
-        'Tap any product in the list to open its details. From there you can view the name, price, stock, category, or expiration date.\n\nYou can tap the "Remove Product" button to delete product',
+        'Tap any product in the list to open its details. From there you can view the name, price, stock, type, or expiration date.\n\nYou can tap the "Remove Product" button to delete product',
     icon: Icons.edit_rounded,
     imagePath: 'assets/manual/inventory/view.png',
   ),
   _StepData(
     title: 'Edit a Product',
     description:
-        'click the "Edit Button". From there you can update the name, price, stock, category, or expiration date. To save the changes, click the "Save, Changes" button',
+        'click the "Edit Button". From there you can update the name, price, stock, type, or expiration date. To save the changes, click the "Save, Changes" button',
     icon: Icons.edit_rounded,
     imagePath: 'assets/manual/inventory/edit.png',
   ),
@@ -290,28 +283,6 @@ final _settingsSteps = [
   ),
 ];
 
-final _troubleshootItems = [
-  _TroubleshootData(
-    question:
-        'Automated Barcode Scanner Matrix Lens Engine Fails to Initialize or Parse Elements Correctly',
-    answer:
-        '1. Open your native operating system parameters preferences panels and verify that Invenzilla explicitly possesses active, authorized camera permission system level access rights configurations tokens rules.\n2. Perform a clean forced restart cycle optimization sequence of the mobile system client wrapper directly.\n3. Reposition physical item alignment positioning lines and retry scanning execution operations under optimal ambient lighting luminosity index environmental configurations constraints parameters.',
-  ),
-  _TroubleshootData(
-    question:
-        'User Authentication Framework Access Request Rejection Alert (Login Protocol Validation Failures)',
-    answer:
-        '1. Verify the exact literal alphanumeric spelling layout criteria patterns of your input Username credentials string box row.\n2. Double-check absolute structural keyboard string characters precision accuracy criteria metrics of your input Password code line.\n3. Use the integrated built-in interactive Password Visibility Toggle tool box option (👁) directly inside the interface field to analyze raw character string formatting arrays values manually.\n4. Execute an administrative secure password reset protocol pathway pipeline if necessary to rebuild authentication keys structures.',
-  ),
-
-  _TroubleshootData(
-    question:
-        'System Performance Latency Sluggish Module Loading Progress View Screens (Processing Buffers)',
-    answer:
-        '1. Inspect the live status parameters configurations elements of your cellular mobile data bands network array or local wireless internet infrastructure connection points pipeline routes topology logs.\n2. Completely clear from active system temporary background RAM memory matrices and restart the Invenzilla runtime binary wrapper package.\n3. Exit backward into your master primary routing index dashboard node layout and attempt to reinitialize and reopen the affected modular context profile sheet lane view layout board overlay once more from scratch.',
-  ),
-];
-
 //  MAIN PAGE
 class Manual extends StatefulWidget {
   const Manual({super.key});
@@ -322,7 +293,7 @@ class Manual extends StatefulWidget {
 
 class _ManualState extends State<Manual> {
   // 0 = Getting Around, 1 = Adding, 2 = Inventory, 3 = Purchase,
-  // 4 = History, 5 = Notifications, 6 = Settings, 7 = Troubleshooting
+  // 4 = History, 5 = Notifications, 6 = Settings,
   int _openIndex = 0;
 
   void _toggle(int index) {
@@ -407,13 +378,6 @@ class _ManualState extends State<Manual> {
             steps: _settingsSteps,
           ),
 
-          //Troubleshooting
-          _TroubleshootSection(
-            index: 7,
-            openIndex: _openIndex,
-            onTap: _toggle,
-            items: _troubleshootItems,
-          ),
           const SizedBox(height: 32),
         ],
       ),
@@ -546,123 +510,6 @@ class _AccordionSection extends StatelessWidget {
   }
 }
 
-class _TroubleshootSection extends StatelessWidget {
-  final int index;
-  final int openIndex;
-  final ValueChanged<int> onTap;
-  final List<_TroubleshootData> items;
-
-  const _TroubleshootSection({
-    required this.index,
-    required this.openIndex,
-    required this.onTap,
-    required this.items,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isOpen = openIndex == index;
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Column(
-      children: [
-        // header
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: () => onTap(index),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-              decoration: BoxDecoration(
-                color: isOpen
-                    ? AppTheme.textOrange.withOpacity(isDark ? 0.15 : 0.07)
-                    : cs.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: isOpen
-                      ? AppTheme.textOrange.withOpacity(0.45)
-                      : cs.outline.withOpacity(0.4),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      color: AppTheme.textOrange.withOpacity(
-                        isOpen ? 0.18 : 0.1,
-                      ),
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: Icon(
-                      Icons.build_circle_outlined,
-                      color: isOpen
-                          ? AppTheme.textOrange
-                          : (isDark
-                                ? AppTheme.darkTextMuted
-                                : AppTheme.textMuted),
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Troubleshooting',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: isOpen
-                            ? AppTheme.textOrange
-                            : (isDark
-                                  ? AppTheme.darkTextPrimary
-                                  : AppTheme.textPrimary),
-                      ),
-                    ),
-                  ),
-                  AnimatedRotation(
-                    turns: isOpen ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 200),
-                    child: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: isOpen ? AppTheme.textOrange : AppTheme.textMuted,
-                      size: 22,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-
-        // body
-        AnimatedCrossFade(
-          duration: const Duration(milliseconds: 220),
-          crossFadeState: isOpen
-              ? CrossFadeState.showSecond
-              : CrossFadeState.showFirst,
-          firstChild: const SizedBox(width: double.infinity),
-          secondChild: Padding(
-            padding: const EdgeInsets.only(top: 10, bottom: 4),
-            child: Column(
-              children: items
-                  .map(
-                    (item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _TroubleshootCard(item: item),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-      ],
-    );
-  }
-}
-
 class _StepCard extends StatelessWidget {
   final _StepData step;
 
@@ -731,67 +578,6 @@ class _StepCard extends StatelessWidget {
                 ? _ScreenshotSingle(path: allImages.first)
                 : _ScreenshotRow(paths: allImages),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class _TroubleshootCard extends StatelessWidget {
-  final _TroubleshootData item;
-
-  const _TroubleshootCard({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? AppTheme.darkCard : AppTheme.cancelIconBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppTheme.textOrange.withOpacity(isDark ? 0.25 : 0.2),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                Icons.help_outline_rounded,
-                size: 16,
-                color: AppTheme.textOrange,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  item.question,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textOrange,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.only(left: 24),
-            child: Text(
-              item.answer,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                height: 1.65,
-                color: isDark
-                    ? AppTheme.darkTextSecondary
-                    : AppTheme.textSecondary,
-              ),
-            ),
-          ),
         ],
       ),
     );

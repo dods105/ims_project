@@ -240,39 +240,41 @@ class _NavItemWithCount extends StatelessWidget {
             ),
           ),
 
-          child: Flexible(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Flexible(
+                child: Text(
                   label,
                   style: AppTheme.drawerText,
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
-                SizedBox(width: 5),
-                if (count > 0)
-                  Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryBlue,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      count > 99 ? '99+' : (count > 0 ? '$count' : '0'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
+              ),
+              if (count > 0) ...[
+                const SizedBox(width: 5),
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    count > 99 ? '99+' : '$count',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-              ],
-            ),
+                ),
+              ] else
+                const SizedBox(width: 4),
+            ],
           ),
         ),
       ),
