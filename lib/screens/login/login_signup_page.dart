@@ -20,7 +20,7 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _isLoading = false; // guard against double-submit
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -29,8 +29,9 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
     super.dispose();
   }
 
+  // called when user clicks login/sign up button
   Future<void> _handleSubmit() async {
-    if (_isLoading) return; // prevent double-tap
+    if (_isLoading) return;
     final username = _usernameController.text.trim();
     final password = _passwordController.text;
 
@@ -98,12 +99,15 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
     }
   }
 
+  // check if password is atleast 6 in length
+  //if empty password or less than 6, return an error
   String? validatePassword(String? value) {
     if (value == null || value.isEmpty) return 'Please enter your password';
     if (value.length < 6) return 'Password must be at least 6 characters';
     return null;
   }
 
+  //check if username field is empty, if empty, return an error
   String? validateUsername(String? value) {
     if (value == null || value.isEmpty) return 'Please enter your username';
     return null;
@@ -118,11 +122,11 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
   }
 
   Future<String?> _getLastUserProfilePic() async {
-    // 1. Check who logged in last
+    //Check who logged in last
     final lastId = await SessionManager.getLastLoggedInUserId();
     if (lastId == null) return null;
 
-    // 2. Fetch their picture path from SQLite
+    //Fetch their picture path from SQLite
     return await DatabaseHelper.instance.getProfilePicById(lastId);
   }
 
@@ -136,9 +140,7 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Default avatar — no per-user pic on login screen to prevent
-              // the previous user's photo leaking to the next person who opens
-              // the app.
+              // get last user profile pic and display
               FutureBuilder<String?>(
                 future: isLoginMode
                     ? _getLastUserProfilePic()
