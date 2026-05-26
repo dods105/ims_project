@@ -1,3 +1,14 @@
+// user_manual.dart
+
+// Structure:
+//   Manual (StatefulWidget)
+//     └── ListView of _AccordionSection widgets: title + icon + steps (clicking the title toggles showing/hiding the steps)
+//          └── _StepCard (text and screenshot instructions) calls on the _StepData model for its content
+//
+//
+// Only one section is open at a time — _openIndex tracks which.
+// Tapping an already-open section closes it (_openIndex → -1).
+
 import 'package:flutter/material.dart';
 import '../../designs/themes.dart';
 

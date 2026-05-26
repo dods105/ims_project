@@ -1,3 +1,21 @@
+// account.dart
+
+// Flow:
+//   Account.build()
+//     reads authProvider for username / userId
+//     reads profileProvider for the current avatar path
+//     tapping the avatar calls profileProvider.pickProfilePicture()
+//     tapping the username calls AccountActions.showEditNameDialog()
+//     tapping CHANGE PASSWORD calls AccountActions.showChangePasswordDialog()
+//
+// AccountActions.showEditNameDialog()
+//   validates non-empty and uniqueness
+//   DatabaseHelper.editUsername() which lead to authProvider.updateUsername()
+//
+// AccountActions.showChangePasswordDialog()
+//   validates min 6 chars
+//   DatabaseHelper.editPassword() which lead to authProvider.updatePassword()
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,7 +29,7 @@ class Account extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authAsync = ref.watch(authProvider);
-    // profileProvider is now AsyncNotifier — use .value for the path.
+
     final picPath = ref.watch(profileProvider).value;
     final cs = Theme.of(context).colorScheme;
 
@@ -219,7 +237,7 @@ class AccountActions {
                   );
                   return;
                 }
-                // editPassword no longer returns a User — just awaits.
+
                 await DatabaseHelper.instance.editPassword(userId, newPass);
                 await ref.read(authProvider.notifier).updatePassword();
                 if (ctx.mounted) {
