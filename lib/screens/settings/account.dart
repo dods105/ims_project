@@ -38,8 +38,6 @@ class Account extends ConsumerWidget {
     final userId = user?.id;
 
     if (userId == null) {
-      // Shouldn't happen — AuthGate prevents reaching this screen when
-      // logged out — but guard anyway to avoid using id 0.
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
