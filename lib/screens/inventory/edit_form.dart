@@ -1,3 +1,25 @@
+// edit_form.dart
+
+// Two modes controlled by the isEditing flag:
+//   View mode - all fields are read-only. shows Edit + Remove buttons
+//   Edit mode - fields become editable. shows Save + Cancel buttons
+//
+// Features:
+//   - Photo picker (camera or gallery, via inventoryProvider)
+//   - Barcode scanner integration
+//   - Date picker for expiry date
+//   - Product type dropdown with a custom overlay (appears above the field)
+//   - Custom categories can be added by typing. user-created ones get a delete button in the dropdown
+//
+// Flow:
+//   initState() — pre-fills all controllers from widget.product
+//   _loadCategories() — appends user-saved custom categories to `types`
+//   _typeFocusNode — shows/hides the category overlay on focus change
+//   _save() — validates, builds updated Product, calls notifier
+//   _deleteProduct() — confirms then calls notifier.deleteProduct()
+//   _pickImage() — delegates to inventoryProvider.pickAndSaveImage()
+//   _deleteCustomCategory() — removes from DB + local list, clears field if selected
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

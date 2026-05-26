@@ -1,3 +1,18 @@
+// home_page.dart
+
+//- Colour-coded stock counts (red = 0, amber = ≤10, green = ok)
+//- Tapping a product opens an edit bottom sheet (EditProductPage)
+//- "Group by Type" mode inserts category dividers into the list
+//
+// Flow:
+//   Widget build()
+//   inventoryProvider supplies the product list. stores it in inventoryAsync
+//   _apply() filters and sorts the list before showing products
+//  _searchController listens to changes in the search field and updates _query, to re-applies the filter (search) in _apply() to show search results in real time
+//   _productTile() shows each product in the list with the correct stock color
+//  _stockColor() returns the correct color based on the stock count
+//   tapping a row: showModalBottomSheet -> EditProductPage
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../designs/appbar.dart';
