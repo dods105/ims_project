@@ -3,17 +3,17 @@
 // Three navigation tiles lead to sub-screens and a Logout button at the bottom
 //
 // Tile routes (navigation tiles):
-//ListView(
-//   /account: Account screen (username, avatar, password)
-//   /display: Display screen (theme, font size)
-//   /manual: User manual / help screen
-//  )
-//
+//    Navigator.pushNamed(/account)
+//    Navigator.pushNamed(/display)
+//    Navigator.pushNamed(/manual)
+// Log out button
+//    ref.read(authProvider.notifier).logout();
+
 // Logout flow:
 //  authProvider.logout() clears session and profile state
 //  Navigator.pushAndRemoveUntil()
 //  AuthGate() - shows log in page
-//
+
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
