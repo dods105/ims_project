@@ -1,3 +1,17 @@
+// session_manager.dart
+
+// Keys stored:
+//user_id - active session user id
+//username - active session username
+//last_logged_in_user_id - ge the last logged user, when he user logs out so the login screen can show the last user's profile picture
+//
+// Flow:
+//saveSession() - called on login, writes userId + username
+//clearSession() - called on logout, removes userId + username but intentionally keeps last_logged_in_user_id
+//getSavedUserId()/getSavedUsername() - read by AuthNotifier.build() on startup to restore session
+//getLastLoggedInUserId() - read by LoginSignupPage to display the corrent user info when app starts
+// ============================================================
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionManager {
