@@ -1,19 +1,15 @@
 // settings_main.dart
 
-// Three navigation tiles lead to sub-screens and a Logout button at the bottom
-//
-// Tile routes (navigation tiles):
-//    Navigator.pushNamed(/account)
-//    Navigator.pushNamed(/display)
-//    Navigator.pushNamed(/manual)
-// Log out button
-//    ref.read(authProvider.notifier).logout();
+// routes
+//- Navigator.pushNamed(/account)
+//- Navigator.pushNamed(/display)
+//- Navigator.pushNamed(/manual)
+// Log out button: ref.read(authProvider.notifier).logout();
 
 // Logout flow:
 //  authProvider.logout() clears session and profile state
 //  Navigator.pushAndRemoveUntil()
 //  AuthGate() - shows log in page
-
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,6 +39,7 @@ class SettingsPage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         children: [
+          // the 3 settings page links button UI
           _SettingsItem(
             icon: Icons.smartphone_rounded,
             label: 'MY ACCOUNT',
@@ -63,6 +60,7 @@ class SettingsPage extends ConsumerWidget {
 
           const SizedBox(height: 48),
 
+          // Logout button
           Center(
             child: SizedBox(
               width: 160,
@@ -77,6 +75,9 @@ class SettingsPage extends ConsumerWidget {
                   ),
                 ),
                 onPressed: () async {
+                  // when logout clicked:
+                  //- clear session
+                  // pushAndRemoveUntil removes the current page and goes to log in page
                   await ref.read(authProvider.notifier).logout();
                   if (context.mounted) {
                     Navigator.pushAndRemoveUntil(
@@ -103,6 +104,7 @@ class SettingsPage extends ConsumerWidget {
   }
 }
 
+// the design of the settings page links
 class _SettingsItem extends StatelessWidget {
   final IconData icon;
   final String label;

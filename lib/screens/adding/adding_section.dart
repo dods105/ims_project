@@ -47,7 +47,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
   ];
   bool _isLoadingTypes = true;
 
-  //overlay for the custom dropdown.
+  //overlay for the custom dropdown
   OverlayEntry? _overlayEntry;
   final LayerLink _layerLink = LayerLink();
   final FocusNode _typeFocusNode = FocusNode();
@@ -90,6 +90,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
     super.dispose();
   }
 
+  //gets any custom categories user has saved before and turns into the preset list sorted alphabetically
   Future<void> _loadCategories() async {
     final userId = ref.read(authProvider).value?.id;
     if (userId != null) {
@@ -653,7 +654,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── LEFT: image upload ──────────────────────────
+                    //mage upload
                     Expanded(
                       flex: 1,
                       child: Column(
@@ -716,7 +717,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
 
                     const SizedBox(width: 15),
 
-                    // ── RIGHT: name + description ───────────────────
+                    //name ad description
                     Expanded(
                       flex: 2,
                       child: Column(

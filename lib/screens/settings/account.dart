@@ -1,20 +1,11 @@
 // account.dart
 
 // Flow:
-//   Account.build()
-//     reads authProvider for username / userId
-//     reads profileProvider for the current avatar path
-//     tapping the avatar calls profileProvider.pickProfilePicture()
-//     tapping the username calls AccountActions.showEditNameDialog()
-//     tapping CHANGE PASSWORD calls AccountActions.showChangePasswordDialog()
-//
-// AccountActions.showEditNameDialog()
-//   validates non-empty and uniqueness
-//   DatabaseHelper.editUsername() which lead to authProvider.updateUsername()
-//
-// AccountActions.showChangePasswordDialog()
-//   validates min 6 chars
-//   DatabaseHelper.editPassword() which lead to authProvider.updatePassword()
+// - reads authProvider for username / userId
+// - reads profileProvider for the current avatar path
+// - tapping the avatar calls profileProvider.pickProfilePicture()
+// - tapping the username calls AccountActions.showEditNameDialog()
+//- tapping CHANGE PASSWORD calls AccountActions.showChangePasswordDialog()
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -37,6 +28,7 @@ class Account extends ConsumerWidget {
     final username = user?.username ?? '';
     final userId = user?.id;
 
+    // just a guard if ever there is an error and user becomes null to avoid crash
     if (userId == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -126,6 +118,8 @@ class Account extends ConsumerWidget {
 }
 
 class AccountActions {
+  //shows dialog to rename the user.
+  //checks uniqueness in the DB before saving so two accounts sharing the same username never happen
   static void showEditNameDialog(
     BuildContext context,
     WidgetRef ref,
@@ -136,7 +130,7 @@ class AccountActions {
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: const Text("CHANGE USERNAME"),
         content: TextField(
           controller: controller,
@@ -147,7 +141,7 @@ class AccountActions {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () => Navigator.pop(context),
             child: const Text("CANCEL"),
           ),
           ElevatedButton(
@@ -157,8 +151,10 @@ class AccountActions {
             ),
             onPressed: () async {
               final newName = controller.text.trim();
+
+              //skip the save if the field is empty or unchanged.
               if (newName.isEmpty || newName == currentName) {
-                Navigator.pop(ctx);
+                Navigator.pop(context);
                 return;
               }
               // Check uniqueness before saving.
@@ -166,8 +162,8 @@ class AccountActions {
                 newName,
               );
               if (taken) {
-                if (ctx.mounted) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('That username is already taken'),
                       backgroundColor: Colors.red,
@@ -176,10 +172,11 @@ class AccountActions {
                 }
                 return;
               }
+              // store new username to the db
               await DatabaseHelper.instance.editUsername(userId, newName);
-              // updateUsername (not the removed updateStateName).
+              // updateUsername across the app UI
               await ref.read(authProvider.notifier).updateUsername(newName);
-              if (ctx.mounted) Navigator.pop(ctx);
+              if (context.mounted) Navigator.pop(context);
             },
             child: const Text("SAVE"),
           ),
@@ -188,6 +185,7 @@ class AccountActions {
     );
   }
 
+  //shows a dialog to set a new password.
   static void showChangePasswordDialog(
     BuildContext context,
     WidgetRef ref,
@@ -198,8 +196,8 @@ class AccountActions {
 
     showDialog(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => AlertDialog(
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
           title: const Text("CHANGE PASSWORD"),
           content: TextField(
             controller: controller,
@@ -216,9 +214,11 @@ class AccountActions {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(ctx),
+              onPressed: () => Navigator.pop(context),
               child: const Text("CANCEL"),
             ),
+
+            // update password button
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blueAccent,
@@ -226,8 +226,10 @@ class AccountActions {
               ),
               onPressed: () async {
                 final newPass = controller.text;
+
+                //check if length is at least 6, if not, dont allow change
                 if (newPass.length < 6) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
+                  ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Password must be at least 6 characters'),
                       backgroundColor: Colors.red,
@@ -236,11 +238,13 @@ class AccountActions {
                   return;
                 }
 
+                // calls editPassword in the database to hash the new password and save to db
                 await DatabaseHelper.instance.editPassword(userId, newPass);
+                // update the password throught the app, especially the one stored in sharedpref
                 await ref.read(authProvider.notifier).updatePassword();
-                if (ctx.mounted) {
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(ctx).showSnackBar(
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text("Password updated successfully!"),
                     ),

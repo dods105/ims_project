@@ -9,7 +9,7 @@ class ExpiredProduct {
   final String expiryDate;
   final String? description;
   final String? imagePath;
-  final String movedAt; // date moved to exipred table db
+  final String movedAt;
 
   ExpiredProduct({
     this.id,

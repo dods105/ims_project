@@ -1,13 +1,7 @@
 // user_manual.dart
 
-// Structure:
-//   Manual (StatefulWidget)
-//     └── ListView of _AccordionSection widgets: title + icon + steps (clicking the title toggles showing/hiding the steps)
-//          └── _StepCard (text and screenshot instructions) calls on the _StepData model for its content
-//
-//
-// Only one section is open at a time — _openIndex tracks which.
-// Tapping an already-open section closes it (_openIndex → -1).
+//an in-app help screen organised as an accordion list.
+//each section covers a different part of the app and expands to show step-by-step cards with screenshots.
 
 import 'package:flutter/material.dart';
 import '../../designs/themes.dart';
@@ -28,7 +22,7 @@ class _StepData {
   });
 }
 
-final _gettingAroundSteps = [
+final navigaton = [
   _StepData(
     title: 'Open the Navigation Menu',
     description:
@@ -50,7 +44,7 @@ final _gettingAroundSteps = [
   ),
 ];
 
-final _addingSteps = [
+final addingSteps = [
   _StepData(
     title: 'Go to the Add Screen',
     description:
@@ -131,7 +125,7 @@ final _addingSteps = [
   ),
 ];
 
-final _inventorySteps = [
+final inventorySteps = [
   _StepData(
     title: 'Open Inventory',
     description:
@@ -149,7 +143,7 @@ final _inventorySteps = [
   _StepData(
     title: 'Sort Inventory',
     description:
-        'Tap the native Filter Icon menu dropdown toggles element layout block. Select a precise desired system inventory tag group directory index classification node filter parameter constraint.',
+        'Tap the sort icon beside the search bar and select how you want to sort your inventory.\n\nIf you go to a different page, the inventory will revert back to how it was originally sorted: By Category',
     icon: Icons.sort,
     imagePath: 'assets/manual/inventory/sort.png',
   ),
@@ -169,7 +163,7 @@ final _inventorySteps = [
   ),
 ];
 
-final _purchaseSteps = [
+final purchaseSteps = [
   _StepData(
     title: 'Open Purchase Screen',
     description:
@@ -213,7 +207,7 @@ final _purchaseSteps = [
   ),
 ];
 
-final _historySteps = [
+final historySteps = [
   _StepData(
     title: 'Open History',
     description:
@@ -254,7 +248,7 @@ final _historySteps = [
   ),
 ];
 
-final _notificationSteps = [
+final notificationSteps = [
   _StepData(
     title: 'View Notifications',
     description:
@@ -264,7 +258,7 @@ final _notificationSteps = [
   ),
 ];
 
-final _settingsSteps = [
+final settingsSteps = [
   _StepData(
     title: 'Navigating Settings',
     description:
@@ -305,7 +299,7 @@ class Manual extends StatefulWidget {
 class _ManualState extends State<Manual> {
   // 0 = Getting Around, 1 = Adding, 2 = Inventory, 3 = Purchase,
   // 4 = History, 5 = Notifications, 6 = Settings,
-  int _openIndex = 0;
+  int _openIndex = 0; // tracks open index, only one can be open at a time
 
   void _toggle(int index) {
     setState(() {
@@ -335,7 +329,7 @@ class _ManualState extends State<Manual> {
             onTap: _toggle,
             icon: Icons.menu_rounded,
             title: 'Getting Around the App',
-            steps: _gettingAroundSteps,
+            steps: navigaton,
           ),
           _AccordionSection(
             index: 1,
@@ -343,7 +337,7 @@ class _ManualState extends State<Manual> {
             onTap: _toggle,
             icon: Icons.add_box_rounded,
             title: 'Adding a New Product',
-            steps: _addingSteps,
+            steps: addingSteps,
             tip: 'You can edit a product later from the Inventory section.',
           ),
           _AccordionSection(
@@ -352,7 +346,7 @@ class _ManualState extends State<Manual> {
             onTap: _toggle,
             icon: Icons.inventory_2_outlined,
             title: 'View & Edit Inventory',
-            steps: _inventorySteps,
+            steps: inventorySteps,
           ),
           _AccordionSection(
             index: 3,
@@ -360,7 +354,7 @@ class _ManualState extends State<Manual> {
             onTap: _toggle,
             icon: Icons.add_shopping_cart_outlined,
             title: 'Recording a Purchase',
-            steps: _purchaseSteps,
+            steps: purchaseSteps,
             tip:
                 'If you want to add more items to the Purchase List, you can just go back to the Purchase screen and select more products. Your current list will be saved until you confirm the transaction.',
           ),
@@ -370,7 +364,7 @@ class _ManualState extends State<Manual> {
             onTap: _toggle,
             icon: Icons.receipt_rounded,
             title: 'Transaction History',
-            steps: _historySteps,
+            steps: historySteps,
           ),
           _AccordionSection(
             index: 5,
@@ -378,7 +372,7 @@ class _ManualState extends State<Manual> {
             onTap: _toggle,
             icon: Icons.notifications_outlined,
             title: 'Notifications',
-            steps: _notificationSteps,
+            steps: notificationSteps,
           ),
           _AccordionSection(
             index: 6,
@@ -386,7 +380,7 @@ class _ManualState extends State<Manual> {
             onTap: _toggle,
             icon: Icons.settings_outlined,
             title: 'Settings',
-            steps: _settingsSteps,
+            steps: settingsSteps,
           ),
 
           const SizedBox(height: 32),

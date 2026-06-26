@@ -1,24 +1,23 @@
 // edit_form.dart
 
-// Two modes controlled by the isEditing flag:
-//   View mode - all fields are read-only. shows Edit + Remove buttons
-//   Edit mode - fields become editable. shows Save + Cancel buttons
-//
+//isEditing flag:
+//View mode - all fields are read-only. shows Edit + Remove buttons
+//Edit mode - fields become editable. shows Save + Cancel buttons
+
 // Features:
-//   - Photo picker (camera or gallery, via inventoryProvider)
-//   - Barcode scanner integration
-//   - Date picker for expiry date
-//   - Product type dropdown with a custom overlay (appears above the field)
-//   - Custom categories can be added by typing. user-created ones get a delete button in the dropdown
-//
+//- Photo picker (camera or gallery)
+//- Barcode scanner
+//- Date picker for expiry date
+//- Product type dropdown with a custom overlay (appears above the field)
+//- Custom categories can be added by typing. user-created ones get a delete button in the dropdown
+
 // Flow:
-//   initState() — pre-fills all controllers from widget.product
-//   _loadCategories() — appends user-saved custom categories to `types`
-//   _typeFocusNode — shows/hides the category overlay on focus change
-//   _save() — validates, builds updated Product, calls notifier
-//   _deleteProduct() — confirms then calls notifier.deleteProduct()
-//   _pickImage() — delegates to inventoryProvider.pickAndSaveImage()
-//   _deleteCustomCategory() — removes from DB + local list, clears field if selected
+//   _loadCategories() — adds the custom category as a new product type
+//   _typeFocusNode — shows/hides the category cjoices
+//   _save() — saves the product
+//   _deleteProduct() — confirms deletion and calls notifier.deleteProduct()
+//   _pickImage() — pick image for product
+//   _deleteCustomCategory() — removes category from the databse
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -106,7 +105,6 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
   OverlayEntry _buildOverlayEntry() {
     final userId = ref.read(authProvider).value?.id;
 
-    // Get the text field's position and size
     final RenderBox renderBox =
         _typeFocusNode.context!.findRenderObject() as RenderBox;
     final Offset offset = renderBox.localToGlobal(Offset.zero);
@@ -123,7 +121,6 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
             children: [
               Positioned(
                 left: offset.dx,
-                // Position it ABOVE the text field
                 bottom: MediaQuery.of(context).size.height - offset.dy + 4,
                 width: fieldWidth,
                 child: Material(
@@ -189,8 +186,8 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
     );
   }
 
-  // ── Category CRUD ────────────────────────────────────────────────────────
-
+  // delete custom category
+  //only custom categories are deleted not the pre made in the app
   Future<void> _deleteCustomCategory(String categoryName, int userId) async {
     _removeTypeOverlay();
     final shouldDelete = await showDialog<bool>(
@@ -278,8 +275,7 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
     isProductTypeCustom =
         p.productType != null && !types.contains(p.productType);
 
-    // Load custom categories silently in the background, default categories are shown
-    // immediately so the field is never blocked waiting for the DB call.
+    // Load custom categories and default categories are shown
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadCategories());
 
     _typeFocusNode.addListener(() {
@@ -296,8 +292,7 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
     });
   }
 
-  /// Loads any user-saved custom categories from the DB and appends them to
-  /// [types]. Runs after the first frame so it never blocks the initial render.
+  /// Loads any usaved custom categories from the DB and add them to the choices
   Future<void> _loadCategories() async {
     final userId = ref.read(authProvider).value?.id;
     if (userId == null) return;
@@ -310,7 +305,7 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
         }
       });
     } catch (_) {
-      // Non-fatal — defaults are already shown.
+      // no catch needed. just here to avoid error
     }
   }
 
@@ -397,7 +392,8 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
     }
   }
 
-  // Save
+  // Save edited info
+  // checks first if any impportant field is missing before saving
   Future<void> _save() async {
     if (nameController.text.trim().isEmpty) {
       _snack('Enter Product Name', isError: true);
@@ -416,6 +412,7 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
       return;
     }
 
+    // wrap into product as an object to easily save data to DB
     final updated = Product(
       id: widget.product.id,
       userId: widget.product.userId,
@@ -434,6 +431,7 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
       imagePath: _imagePath,
     );
 
+    // calls on updateProduct() to save new info
     await ref.read(inventoryProvider.notifier).updateProduct(updated);
 
     if (mounted) {
@@ -469,8 +467,9 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
           .read(inventoryProvider.notifier)
           .deleteProduct(widget.product.id!);
       if (mounted) {
-        Navigator.pop(context); // Close the bottom sheet
+        Navigator.pop(context); // Close the dialog sheet
         ScaffoldMessenger.of(context).showSnackBar(
+          // show success message
           SnackBar(
             content: Text('Product deleted successfully'),
             backgroundColor: Colors.green,
@@ -481,6 +480,8 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
     }
   }
 
+  // message bottom snackbar
+  // isError = true > red background, false > green
   void _snack(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -495,7 +496,6 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final cs = Theme.of(context).colorScheme;
 
     return Column(
       children: [
@@ -532,8 +532,6 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
         Expanded(
           child: SingleChildScrollView(
             controller: widget.scrollController,
-            // Extra bottom padding = keyboard height so focused fields are
-            // always visible above the keyboard when it slides up.
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).viewInsets.bottom,
             ),
@@ -542,7 +540,7 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Photo + Name / Description
+                  // Photo and Name / Description
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -599,7 +597,7 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
                         ),
                       ),
                       SizedBox(width: 16),
-                      // Name + Description
+                      // Name and Description
                       Expanded(
                         flex: 2,
                         child: Column(
@@ -700,7 +698,7 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
 
                   SizedBox(height: 20),
 
-                  // Qty + Expiry
+                  // Qty and Expiry fields
                   Row(
                     children: [
                       SizedBox(
@@ -806,8 +804,6 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
                   Text('TYPE'),
                   SizedBox(height: 5),
 
-                  // Product type — shown immediately; custom categories are
-                  // appended silently once _loadCategories() finishes.
                   CompositedTransformTarget(
                     link: _layerLink,
                     child: TextField(
@@ -828,7 +824,6 @@ class _EditProductPageState extends ConsumerState<EditProductPage> {
                         }),
                       ],
                       onChanged: (_) {
-                        // Rebuild the overlay so the filtered list updates.
                         _refreshOverlay();
                         final val = productTypeController.text
                             .trim()

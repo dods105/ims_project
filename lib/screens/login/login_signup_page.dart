@@ -1,17 +1,18 @@
 // login_signup_page.dart
 //handles both login and new account creation.
-//
+
+// guide for analysts
 // On login mode:
-//   1. User enters username + password
-//   2. _handleSubmit() validates input (validate username and password)
-//   3. DatabaseHelper.checkUser() checks credentials if exists
-//   4. On success: authProvider.login() - AuthGate redirects to HomePage
-//
+// User enters username + password
+// _handleSubmit() validates input (validate username and password)
+// DatabaseHelper.checkUser() checks credentials if exists
+// On success: authProvider.login() - AuthGate redirects to HomePage
+
 // On sign-up mode:
-//   1. User enters username + password
-//   2. _handleSubmit() validates, then checks username uniqueness with DatabaseHelper.instance.usernameExists(username);
-//   3. DatabaseHelper.createUser() inserts the new record
-//   4. logs the new user in
+// User enters username + password
+//  _handleSubmit() validates, then checks username uniqueness with DatabaseHelper.instance.usernameExists(username);
+// DatabaseHelper.createUser() inserts the new record
+//logs the new user in
 
 import 'dart:io';
 
@@ -128,6 +129,7 @@ class _LoginSignupPageState extends ConsumerState<LoginSignupPage> {
     return null;
   }
 
+  // switches to login to sign up or vice versa and clears text fields
   void _toggleMode() {
     setState(() {
       isLoginMode = !isLoginMode;

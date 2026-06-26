@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../providers/purchase_provider.dart';
 import '../designs/themes.dart';
 
+// Shows the receipt as a bottom sheet after a purchase is confirmed.
 class ShowReceiptBottomSheet {
   ShowReceiptBottomSheet(
     BuildContext context,
@@ -56,6 +57,7 @@ class ShowReceiptBottomSheet {
 
             SizedBox(height: 15),
 
+            //the receipt card box and scrollable if item list is too long to fit.
             Expanded(
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -71,6 +73,7 @@ class ShowReceiptBottomSheet {
                       SizedBox(height: 15),
 
                       // Transaction details
+                      //top section are receipt number, date/time, and customer info if it was provided (both are optional fields).
                       Column(
                         children: [
                           _buildDetailRow('Receipt No.', transactionId),
@@ -86,7 +89,10 @@ class ShowReceiptBottomSheet {
                           if (customerAddress != null &&
                               customerAddress.isNotEmpty) ...[
                             SizedBox(height: 8),
-                            _buildDetailRow('Customer Adress', customerAddress),
+                            _buildDetailRow(
+                              'Customer Address',
+                              customerAddress,
+                            ),
                           ],
                         ],
                       ),
@@ -94,6 +100,7 @@ class ShowReceiptBottomSheet {
                       Divider(),
 
                       // Items section
+                      // list of items purchased, one row each
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -263,7 +270,7 @@ class ShowReceiptBottomSheet {
       final date = DateTime.parse(dateTime);
       return DateFormat('hh:mm a').format(date);
     } catch (e) {
-      return '${dateTime.substring(11, 16)}';
+      return dateTime.substring(11, 16);
     }
   }
 }

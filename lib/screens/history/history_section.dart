@@ -618,7 +618,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Date row ──────────────────────────────────────────────
+                // Date row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -665,7 +665,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // ── Summary cards ─────────────────────────────────────────
+                //summary cards
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -714,7 +714,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      // Profit (tappable → opens W/M breakdown)
+                      // Profit (tap > opens W/M breakdown)
                       SizedBox(
                         width: 125,
                         height: 125,
@@ -749,7 +749,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Header row: title + toggle
                         Wrap(
                           alignment: WrapAlignment.spaceBetween,
                           runSpacing: 12,
@@ -793,7 +792,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
 
                         const SizedBox(height: 16),
 
-                        // make bar chardt data fit dynamically
+                        // makes bar chardt data fit dynamically
                         LayoutBuilder(
                           builder: (context, constraints) {
                             final totalBars = chartData.length;
@@ -835,7 +834,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
 
                 const SizedBox(height: 24),
 
-                //transactions list & grand total
+                //transactions list and grand total
                 ..._buildTransactions(filteredTransactions, grandTotal, cs),
               ],
             ),
@@ -883,7 +882,7 @@ class _ProfitSheetState extends State<_ProfitSheet> {
     'Week 5',
   ];
 
-  String _fmt(double v) => v == 0 ? '' : '₱${v.toStringAsFixed(2)}';
+  String monthTotal(double v) => v == 0 ? '' : '₱${v.toStringAsFixed(2)}';
 
   @override
   Widget build(BuildContext context) {
@@ -977,8 +976,8 @@ class _ProfitSheetState extends State<_ProfitSheet> {
           ...List.generate(rowLabels.length, (i) {
             return _tableRow(
               label: rowLabels[i],
-              sales: _fmt(salesData[i]),
-              profit: _fmt(profitData[i]),
+              sales: monthTotal(salesData[i]),
+              profit: monthTotal(profitData[i]),
               isHeader: false,
               cs: cs,
             );
@@ -989,8 +988,8 @@ class _ProfitSheetState extends State<_ProfitSheet> {
             padding: const EdgeInsets.only(top: 4),
             child: _tableRow(
               label: 'Total:',
-              sales: _fmt(totalSales),
-              profit: _fmt(totalProfit),
+              sales: monthTotal(totalSales),
+              profit: monthTotal(totalProfit),
               isHeader: false,
               isTotal: true,
               cs: cs,
@@ -1053,6 +1052,7 @@ class _ProfitSheetState extends State<_ProfitSheet> {
     );
   }
 
+  // table data for the revenue
   Widget _tableRow({
     required String label,
     required String sales,

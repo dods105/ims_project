@@ -1,16 +1,8 @@
 // display.dart
 
 // Layout:
-//   Display (ConsumerWidget)
-//      Theme Mode toggle (Switch)
-//      _FontSizeCard (clickable "A" buttons)
-//
-// Flow:
-//  - ref.watch(displaySettingsProvider)
-//   - User flips the Switch(Toggles):  notifier.setThemeMode()
-//   - User taps an "A" button: notifier.setFontScale()
-//   - Both write to SharedPrefs and rebuild state immediately
-//   - ref.watch(displaySettingsProvider) [rebuilds ui]
+// Theme Mode toggle (Switch)
+// _FontSizeCard (clickable "A" buttons)
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -95,11 +87,13 @@ class Display extends ConsumerWidget {
   }
 }
 
+// Displays three "A" buttons representing Small / Medium / Large font sizes.
+//the currently active size is highlighted with the blue
 class _FontSizeCard extends StatelessWidget {
   final double currentScale;
   final Function(double) onSelect;
 
-  _FontSizeCard({required this.currentScale, required this.onSelect});
+  const _FontSizeCard({required this.currentScale, required this.onSelect});
 
   @override
   Widget build(BuildContext context) {
@@ -140,8 +134,7 @@ class _FontSizeCard extends StatelessWidget {
                     height: 85,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      //highlight the selected option with the primary color (blue)
-                      color: isSelected ? cs.primary : cs.surface,
+                      //highlight the selected option with blue                      color: isSelected ? cs.primary : cs.surface,
                     ),
                     alignment: Alignment.center,
                     child: Text(

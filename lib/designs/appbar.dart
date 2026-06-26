@@ -23,6 +23,7 @@ class AppBarDesign extends ConsumerWidget implements PreferredSizeWidget {
         children: [
           const SizedBox(width: 8),
           // store profile
+          // gets the profile pic if there is any, if none, get the dafault
           profileAsync.when(
             data: (profilePath) => CircleAvatar(
               radius: 16,
@@ -31,12 +32,12 @@ class AppBarDesign extends ConsumerWidget implements PreferredSizeWidget {
                   : const AssetImage('assets/images/default-pfp.png')
                         as ImageProvider,
             ),
-            // While loading the path from SQLite, show a default asset placeholder
+            // While loading the path from SQLite, show a default profile
             loading: () => const CircleAvatar(
               radius: 16,
               backgroundImage: AssetImage('assets/images/default-pfp.png'),
             ),
-            // Fallback placeholder on database error
+
             error: (_, __) => const CircleAvatar(
               radius: 16,
               backgroundImage: AssetImage('assets/images/default-pfp.png'),

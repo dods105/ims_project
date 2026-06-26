@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DisplaySettings {
-  final ThemeMode themeMode;
-  final double fontScale;
-  final String fontFamily;
+  final ThemeMode themeMode; // light, dark mode
+  final double fontScale; // font size
+  final String fontFamily; // font Family, always Roboto
 
   const DisplaySettings({
     this.themeMode = ThemeMode.light,
@@ -28,6 +28,7 @@ const _kThemeMode = 'display_theme_mode';
 const _kFontScale = 'display_font_scale';
 
 //  Notifier
+// reads and load last display preferences
 class DisplayNotifier extends AsyncNotifier<DisplaySettings> {
   @override
   Future<DisplaySettings> build() async {
@@ -43,6 +44,7 @@ class DisplayNotifier extends AsyncNotifier<DisplaySettings> {
     );
   }
 
+  // when theme is changed, update the UI and save to SharedPreferences
   Future<void> setThemeMode(ThemeMode mode) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kThemeMode, _modeToString(mode));
@@ -51,6 +53,7 @@ class DisplayNotifier extends AsyncNotifier<DisplaySettings> {
     );
   }
 
+  // scale values to labels: 0.78 = Small, 0.88 = Medium, 1.02 = Large
   Future<void> setFontScale(double scale) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_kFontScale, scale);
@@ -59,12 +62,14 @@ class DisplayNotifier extends AsyncNotifier<DisplaySettings> {
     );
   }
 
+  // converts the string to type Thememode
   static ThemeMode _modeFromString(String s) => switch (s) {
     'dark' => ThemeMode.dark,
     'system' => ThemeMode.system,
-    _ => ThemeMode.light,
+    _ => ThemeMode.light, // default to light if not found
   };
 
+  // converts ThemeMode to string for storage and retrieval from SharedPreferences
   static String _modeToString(ThemeMode m) => switch (m) {
     ThemeMode.dark => 'dark',
     ThemeMode.system => 'system',

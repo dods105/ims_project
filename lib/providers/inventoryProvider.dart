@@ -1,3 +1,8 @@
+// For everything inventory-related (all functions to call when adding, modifying, deleting):
+// - Active products
+// - Expired products (moved out of active stock)
+// - In-app notifications (low stock, expiring soon)
+
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -26,6 +31,7 @@ class InventoryState {
   });
 
   //filltered getters
+  // filters low stock and out of stock notif
   List<AppNotification> get expiringSoon =>
       notifications.where((n) => n.type == NotifType.expiringSoon).toList();
 
@@ -65,6 +71,7 @@ class InventoryNotifier extends AsyncNotifier<InventoryState> {
     return _fetchAll(user.id!);
   }
 
+  // gets all three lists from the DB
   Future<InventoryState> _fetchAll(int userId) async {
     final products = await _db.getProductsByUser(userId);
     final expiredProducts = await _db.getExpiredProductByUSer(userId);
@@ -80,6 +87,7 @@ class InventoryNotifier extends AsyncNotifier<InventoryState> {
     );
   }
 
+  // checks expired product and moces them to expired_product table
   Future<void> refresh() async {
     final user = ref.read(authProvider).value;
     if (user == null) return;
@@ -88,6 +96,7 @@ class InventoryNotifier extends AsyncNotifier<InventoryState> {
     state = AsyncData(await _fetchAll(user.id!));
   }
 
+  // for inventory sorting of newest first or oldest first notif
   Future<void> toggleSortOrder() async {
     _sortOrder = _sortOrder == NotifSortOrder.newestFirst
         ? NotifSortOrder.oldestFirst
@@ -98,14 +107,18 @@ class InventoryNotifier extends AsyncNotifier<InventoryState> {
     state = AsyncData(await _fetchAll(user.id!));
   }
 
+  // gets all the products for a user in the database
   Future<Product?> getExistingProduct(Product product) async {
     return await _db.getExistingProduct(product);
   }
 
+  // gets a product by its barcode
+  // used for scanning barcode and checking if product exists in inventory
   Future<Product?> getProductByBarcode(int userId, String barcode) async {
     return _db.getProductByBarcode(userId, barcode);
   }
 
+  // search products by name
   Future<List<Product>> searchProduct(int userId, String query) async {
     final products = await _db.getProductsByUser(userId);
     if (query.isEmpty) return products;
@@ -116,21 +129,26 @@ class InventoryNotifier extends AsyncNotifier<InventoryState> {
     }).toList();
   }
 
+  // add a product to the database and inventory
+  // can insert/modify just the quantity if product already exists
   Future<void> addProduct(Product product) async {
     await _db.insertOrUpdateProduct(product);
     await refresh();
   }
 
+  // used for editing product information
   Future<void> updateProduct(Product product) async {
     await _db.updateProduct(product);
     await refresh();
   }
 
+  // for product removal from inventory
   Future<void> deleteProduct(int id) async {
     await _db.deleteProduct(id);
     await refresh();
   }
 
+  // move expired products to the expired tables and the expired notifications tab
   Future<void> deleteExpiredProduct(int id) async {
     await _db.deleteExpiredProduct(id);
     await refresh();

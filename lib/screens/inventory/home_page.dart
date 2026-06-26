@@ -1,17 +1,15 @@
 // home_page.dart
 
-//- Colour-coded stock counts (red = 0, amber = ≤10, green = ok)
-//- Tapping a product opens an edit bottom sheet (EditProductPage)
-//- "Group by Type" mode inserts category dividers into the list
-//
+//color coded stock counts (red = 0, amber = ≤10, green = ok)
+//tapping a product opens an edit bottom sheet (EditProductPage)
+
 // Flow:
-//   Widget build()
-//   inventoryProvider supplies the product list. stores it in inventoryAsync
-//   _apply() filters and sorts the list before showing products
-//  _searchController listens to changes in the search field and updates _query, to re-applies the filter (search) in _apply() to show search results in real time
-//   _productTile() shows each product in the list with the correct stock color
-//  _stockColor() returns the correct color based on the stock count
-//   tapping a row: showModalBottomSheet -> EditProductPage
+// inventoryProvider() supplies the product list. stores it in inventoryAsync
+// _apply() -> list.sort() and _searchController
+// _searchController ->  contains(_query).toList()
+// _productTile() shows each product in the list with the correct stock color
+// _stockColor() returns the correct color based on the stock count
+//tapping a product: showModalBottomSheet -> EditProductPage
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -58,7 +56,8 @@ class _HomePageState extends ConsumerState<HomePage> {
     super.dispose();
   }
 
-  // filter and sort pruct based on the chosen sort method
+  //applies the current search to product list or
+  // filter and sort product based on the chosen sort method
   List<Product> _apply(List<Product> products) {
     var list = _query.isEmpty
         ? List<Product>.from(products)
@@ -97,7 +96,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     return list;
   }
 
-  //Stock color
+  //Stock color quantity indicator
   Color _stockColor(int qty) {
     if (qty == 0) return AppTheme.textRed;
     if (qty <= 10 && qty > 0) return Colors.amber;
@@ -245,6 +244,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   );
                 }
 
+                // search was empty or no product was found during search
                 if (products.isEmpty) {
                   return Center(
                     child: Text(
@@ -256,7 +256,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                   );
                 }
 
-                // Group-by-type dividers
+                // Group-by-type mode sorting default
+                // group based by product type, if no category, group as uncategorized
                 if (_sortMode == _SortMode.groupByType) {
                   final groups = <String, List<Product>>{};
                   for (final p in products) {
@@ -319,6 +320,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   //ui per product on the product list
   //product container
+  //tapping opens view/edit mode
   Widget _productTile(Product product, ColorScheme cs) {
     return GestureDetector(
       onTap: () {

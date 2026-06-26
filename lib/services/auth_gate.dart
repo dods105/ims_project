@@ -1,7 +1,6 @@
 // auth_gate.dart
 //
-// This is the very first widget and logic the loads in the app. It watches
-// the auth state and decides which screen to show:
+//loads in the app. and watches the auth state and decides which screen to show:
 //   Still loading  - spinner
 //   Logged in      - HomePage (Inventory)
 //   Not logged in  - LoginSignupPage

@@ -35,7 +35,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
     return null;
   }
 
-  // Called after a successful login or account creation and loads the user's profile picture
+  // Called after login or account creation and loads the user profile picture
   Future<void> login(User user) async {
     await SessionManager.saveSession(user.id!, user.username);
     await ref.read(profileProvider.notifier).load(user.id!);

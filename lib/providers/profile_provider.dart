@@ -11,7 +11,7 @@ final profileProvider = AsyncNotifierProvider<ProfileNotifier, String?>(
 
 class ProfileNotifier extends AsyncNotifier<String?> {
   @override
-  Future<String?> build() async => null; // loaded explicitly via load()
+  Future<String?> build() async => null;
 
   /// Called after login/session restore to fetch the stored path from the DB.
   Future<void> load(int userId) async {
@@ -27,8 +27,7 @@ class ProfileNotifier extends AsyncNotifier<String?> {
     );
     if (picked == null) return;
 
-    //copy from OS temp/cache to permanent storage so the path survives
-    //app restarts and OS cache clears.
+    //copy to permanent storage inside the app directory so if deleted in gallery, it still shows a photo
     final appDir = await getApplicationDocumentsDirectory();
     final fileName = 'profile_$userId.jpg';
     final savedPath = p.join(appDir.path, fileName);

@@ -8,13 +8,11 @@ import '../../models/notifications/notification_model.dart';
 import '../../models/products/expired_product.dart';
 import '../../providers/inventoryProvider.dart';
 
-// ============================================================================
 // OVERALL FUNCTIONALITY OF THE CLASS:
 // The 'NotificationPage' is a UI component that displays various types of
 // inventory notifications (Expiring, Low Stock, All, and Expired).
 // It utilizes Riverpod for reactive state management, enabling automatic
 // data updates, and supports sorting (newest/oldest) and item deletion.
-// ============================================================================
 class NotificationPage extends ConsumerWidget {
   const NotificationPage({super.key});
 
@@ -26,7 +24,6 @@ class NotificationPage extends ConsumerWidget {
     final inventoryAsync = ref.watch(inventoryProvider);
     final cs = Theme.of(context).colorScheme;
 
-    // WIDGET (Asynchronous Data Handler)
     // Manages the view state based on three conditions: Loading, Error, or Data.
     return inventoryAsync.when(
       loading: () => Scaffold(
@@ -76,7 +73,6 @@ class NotificationPage extends ConsumerWidget {
           ),
         ];
 
-        // WIDGETS (Main Layout Structure)
         // Uses DefaultTabController to sync tab switching with screen content views.
         return DefaultTabController(
           length: tabs.length,
