@@ -1,18 +1,17 @@
 // auth_provider.dart
 
 // Manages the current logged-in user in the app.
-//
+
 // State type: User? (At the build() stage)
 // return
 //   null - nobody is logged in
 //   User - an account is active
-//
+
 // Flow:
-//   build() - called once, tries to restore a saved session from SharedPrefs
-//   login()- saves session and loads profile picture
-//   logout() clears session and wipes profile state
-//   updateUsername()- called when user changed their username
-//   updatePassword()- called when user changes their pass
+//login()- saves session and loads profile picture
+//logout() clears session and wipes profile state
+//updateUsername()- called when user changed their username
+//updatePassword()- called when user changes their pass
 
 //SessionManager  — reads/writes userId & username to prefs (SharedPreferences)
 //profileProvider — makes sure the user uses his/her own profile pic

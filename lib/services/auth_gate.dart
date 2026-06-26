@@ -1,16 +1,4 @@
 // auth_gate.dart
-//
-//loads in the app. and watches the auth state and decides which screen to show:
-//   Still loading  - spinner
-//   Logged in      - HomePage (Inventory)
-//   Not logged in  - LoginSignupPage
-//
-// Flow:
-//   1. App starts- AuthGate is loaded
-//   2. authProvider is watched
-//   3. While it is not finished getting info, show a loading spinner
-//   4. Once authProvider provides the user data, route to the inventory if user is logged in and login/signup page if not logged in.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/screens/login/login_signup_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,7 +20,8 @@ class AuthGate extends ConsumerWidget {
       //if there is an error retrieving the user data, show an error message
       error: (e, _) =>
           const Scaffold(body: Center(child: Text('Something Went Wrong'))),
-      //user != null means a session was found (user logged in the app previously) or user login/sign up in the log in screen was successful, so route to the inventory page.
+      //user != null
+      // a session was found (user logged in the app previously) or user login/sign up in the log in screen was successful so route to the inventory page.,
       data: (user) {
         if (user != null) {
           return const HomePage();

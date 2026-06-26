@@ -165,7 +165,6 @@ class AppTheme {
   static TextStyle get subtitleLight =>
       bodyMedium.copyWith(color: white.withValues(alpha: 0.72));
 
-  //  LIGHT ThemeData — base sizes only; app font size is MediaQuery.textScaler (see main.dart).
   static ThemeData lightTheme({String fontFamily = 'Roboto'}) {
     final base = _buildTextTheme(1.0, Brightness.light);
     return ThemeData(
