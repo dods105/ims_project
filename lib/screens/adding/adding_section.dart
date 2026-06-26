@@ -141,6 +141,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
     }
   }
 
+  // the dropdown list for the categories choices above field
   OverlayEntry _buildOverlayEntry() {
     final userId = ref.read(authProvider).value?.id;
 
@@ -235,6 +236,8 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
     );
   }
 
+  // confirms with the user then deletes a custom category from the DB
+  // products that already used that category keep their type
   Future<void> _deleteCustomCategory(String categoryName, int userId) async {
     _removeTypeOverlay();
     final shouldDelete = await showDialog<bool>(
@@ -300,6 +303,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
     }
   }
 
+  // called on when user saves a product with a custom category
   Future<void> _saveCustomTypeIfNeeded(int userId) async {
     if (!isProductTypeCustom ||
         productType == null ||
@@ -366,6 +370,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
     }
   }
 
+  // saves the product to db
   Future<void> savedproduct(int userId) async {
     if (nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -582,6 +587,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
 
   void _removePhoto() => setState(() => _imagePath = null);
 
+  // the dialog pop up when the upload photo is tapped
   void _showActionDialog() {
     showDialog(
       context: context,
@@ -621,6 +627,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
     );
   }
 
+  //date picker for expiry date
   Future<void> _selectDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -654,7 +661,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    //mage upload
+                    //image upload
                     Expanded(
                       flex: 1,
                       child: Column(
@@ -973,7 +980,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                         }),
                       ],
                       onChanged: (_) {
-                        //rebuild the overlay so filtered list update
+                        //refresh overlay so filtered list category updates
                         _refreshOverlay();
                         final val = _typeController.text.trim().toUpperCase();
                         setState(() {
@@ -991,7 +998,7 @@ class _AddingSectionPageState extends ConsumerState<AddingSectionPage> {
                         suffixIcon: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            //clear button. only visible when there is text.
+                            //clear button only visible when there is text inside category field
                             // the x button
                             if (_typeController.text.isNotEmpty)
                               GestureDetector(

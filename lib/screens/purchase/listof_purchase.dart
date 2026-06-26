@@ -9,6 +9,9 @@ import '../../models/purchase/transaction_sale.dart';
 import '../../models/purchase/transaction_items.dart';
 import '../../designs/receipt.dart';
 
+//the checkout summary screen
+//shows everything the user picked
+// in PurchaseSection, lets them enter cash paid and optional customer details, then finalizes the sale when they tap Checkout.
 class ListofPurchase extends ConsumerStatefulWidget {
   const ListofPurchase({super.key});
 
@@ -17,6 +20,7 @@ class ListofPurchase extends ConsumerStatefulWidget {
 }
 
 class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
+  // fixed column widths for the item tabl
   static double _barcodeColWidth = 92;
   static double _qtyColWidth = 36;
   static double _priceColWidth = 82;
@@ -27,7 +31,7 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
       TextEditingController();
   final TextEditingController _cashController = TextEditingController();
   final TextEditingController _changeController = TextEditingController();
-  bool _isProcessing = false;
+  bool _isProcessing = false; // disables the checkout button while saving
 
   @override
   void initState() {
@@ -44,6 +48,7 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
     super.dispose();
   }
 
+  // generates a new transaction ID for receipt, before the user even hits checkout
   Future<void> _loadTransactionId() async {
     final user = ref.read(authProvider).asData?.value;
     if (user != null) {
@@ -54,16 +59,19 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
     }
   }
 
+  // recalculates change live as the cashier types in the cash amount
   void _calculateChange() {
     final purchaseState = ref.read(purchaseProvider);
     final cashText = _cashController.text;
     if (cashText.isNotEmpty) {
       final cash = double.tryParse(cashText) ?? 0;
       final change = cash - purchaseState.totalPrice;
+      // never show a negative change, just 0 until enough cash is entered
       _changeController.text = change >= 0 ? change.toStringAsFixed(2) : '0.00';
     }
   }
 
+  //validates cash amount, writes the transaction anf items to the DB, refreshes inventory, clears the cart, and shows the receipt
   Future<void> _processCheckout() async {
     final purchaseState = ref.read(purchaseProvider);
     final db = DatabaseHelper.instance;
@@ -81,6 +89,7 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
 
     final cash = double.tryParse(_cashController.text) ?? 0;
     if (cash < purchaseState.totalPrice) {
+      // covers both "field was empty" and "not enough cash" as message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -100,11 +109,10 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
       final user = ref.read(authProvider).value;
       if (user == null) throw Exception('User not authenticated');
 
-      // in case transaction id does not load during initial state
       if (transactionId == null) {
         _loadTransactionId();
       }
-      // load reciept before after checkout before clearing all previous info
+
       final receiptItems = purchaseState.items.values.toList();
       final receiptTotal = purchaseState.totalPrice;
       final receiptCash = cash;
@@ -139,21 +147,18 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
           )
           .toList();
 
-      // inserts transaction, validates stock,
-      // update inventory, and build inserts all transaction items to db
+      // double-checks stock is still sufficient, deducts inventory, and writes all the line items
       await db.checkoutTransaction(
         transaction: transaction,
         items: transactionItems,
       );
 
-      //refresh inventory state to reflect updated stock.
       await ref.read(inventoryProvider.notifier).refresh();
 
-      //clear the selection on purchasse section after the saving to db
+      // empty the cart after purchase
       ref.read(purchaseProvider.notifier).clear();
 
       if (mounted) {
-        // go back to purcchase section, then show the receipt over the new route.
         Navigator.pushNamedAndRemoveUntil(
           context,
           '/purchase',
@@ -182,7 +187,6 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
         );
       }
     } on InsufficientStockException catch (e) {
-      //stock changed between cart-add and checkout
       if (mounted) {
         showDialog(
           context: context,
@@ -232,6 +236,8 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
             _buildInfoCard(transactionId ?? "Generating...", cs),
             SizedBox(height: 12),
             _buildTableHeader(),
+
+            // list of cart items
             ListView.separated(
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
@@ -258,6 +264,7 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
                             overflow: TextOverflow.ellipsis,
                             style: AppTheme.bodySmall.copyWith(
                               color: cs.onSurface,
+
                               fontFeatures: [FontFeature.tabularFigures()],
                             ),
                           ),
@@ -315,6 +322,7 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
     );
   }
 
+  // card up top showing the transaction id plus optional customer name/address
   Widget _buildInfoCard(String transId, ColorScheme cs) {
     return Container(
       padding: EdgeInsets.all(16),
@@ -377,6 +385,7 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
     );
   }
 
+  // header row for the items table bar with column labels
   Widget _buildTableHeader() {
     final headerStyle = AppTheme.titleSmall.copyWith(
       color: Colors.white,
@@ -444,7 +453,8 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
     );
   }
 
-  InputDecoration _underlineFieldDecoration({String? prefix}) {
+  // shared underline style decoration used by the cash/change fields below
+  InputDecoration divider({String? prefix}) {
     return InputDecoration(
       isDense: true,
       prefixText: prefix,
@@ -465,6 +475,7 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
     );
   }
 
+  // total, item count, cash input, change (calculated automatically) and the Checkout button
   Widget _buildTotalSection(double total, int totalItems, ColorScheme cs) {
     return Container(
       width: double.infinity,
@@ -539,8 +550,9 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
                   controller: _cashController,
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   style: AppTheme.bodyMedium,
+
                   onChanged: (_) => _calculateChange(),
-                  decoration: _underlineFieldDecoration(prefix: "₱ "),
+                  decoration: divider(prefix: "₱ "),
                 ),
               ),
             ],
@@ -563,7 +575,7 @@ class _ListofPurchaseState extends ConsumerState<ListofPurchase> {
                   controller: _changeController,
                   readOnly: true,
                   style: AppTheme.bodyMedium,
-                  decoration: _underlineFieldDecoration(prefix: "₱ "),
+                  decoration: divider(prefix: "₱ "),
                 ),
               ),
             ],

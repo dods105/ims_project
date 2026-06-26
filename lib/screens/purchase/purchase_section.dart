@@ -11,6 +11,9 @@ import '../../providers/inventoryProvider.dart';
 import '../../providers/purchase_provider.dart';
 import 'listof_purchase.dart';
 
+// point-of-sale
+// The user searches/browses inventory, taps a product to set a quantity,
+//hit Confirm to move on to ListofPurchase where the actual checkout happens.
 class PurchaseSection extends ConsumerStatefulWidget {
   const PurchaseSection({super.key});
 
@@ -25,6 +28,7 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
   @override
   void initState() {
     super.initState();
+
     _searchController.addListener(() {
       setState(() => _query = _searchController.text.trim().toLowerCase());
     });
@@ -36,6 +40,8 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
     super.dispose();
   }
 
+  // filters the full inventory list down to whatever matches the search box,
+  // checking both name and barcode
   List<Product> _filterProducts(List<Product> products) {
     if (_query.isEmpty) return products;
     return products.where((p) {
@@ -44,6 +50,9 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
     }).toList();
   }
 
+  // opens the bottom sheet where the user picks how many units of a
+  // product they want. onConfirm gets called with the final quantity
+  // once they tap Confirm.
   void _showQuantityModal(
     Product product,
     int initialQty,
@@ -86,7 +95,6 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Handle bar
                     Center(
                       child: Container(
                         width: 36,
@@ -99,7 +107,7 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
                       ),
                     ),
 
-                    // Product info row
+                    // product photo, name, price and stock info
                     Row(
                       children: [
                         ClipRRect(
@@ -157,7 +165,7 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
 
                     const SizedBox(height: 15),
 
-                    // Quantity row
+                    // minus button, qty text field, plus button
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -194,6 +202,8 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
                               if (parsed < 1) {
                                 updateQuantity(1);
                               } else if (parsed > product.quantity) {
+                                // user typed more than what's in stock,
+                                // warn them and cap it at the max
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
@@ -222,7 +232,7 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
 
                     const SizedBox(height: 16),
 
-                    // Subtotal chip
+                    //live updating subtotal based on current quantity
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
@@ -256,6 +266,7 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
 
                     const SizedBox(height: 16),
 
+                    // Cancel / Confirm buttons
                     Row(
                       children: [
                         Expanded(
@@ -320,7 +331,7 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
         children: [
           const SizedBox(height: 16),
 
-          // Search bar
+          // search bar with a barcode scan shortcut, same pattern as
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Container(
@@ -362,12 +373,14 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
 
           const SizedBox(height: 12),
 
-          // Product list
+          // the product list, split into three sections
+          // selected, available, out of stock
           Expanded(
             child: inventoryState.when(
               data: (data) {
                 final allProducts = _filterProducts(data.products);
 
+                // list products into selected / available / out-of-stock
                 final selectedProducts = <Product>[];
                 final availableProducts = <Product>[];
                 final outOfStockProducts = <Product>[];
@@ -405,6 +418,7 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
                 }
 
                 if (allProducts.isEmpty) {
+                  // inventory has products, just none match the current search
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -432,6 +446,7 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
                     vertical: 8,
                   ),
                   children: [
+                    // products already in the cart show up first
                     if (selectedProducts.isNotEmpty) ...[
                       _sectionHeader(
                         'SELECTED (${selectedProducts.length})',
@@ -449,6 +464,7 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
                       const SizedBox(height: 8),
                     ],
 
+                    // Available products. everything still in stock and not yet picked
                     if (availableProducts.isNotEmpty) ...[
                       _sectionHeader(
                         'AVAILABLE (${availableProducts.length})',
@@ -465,6 +481,7 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
                       const SizedBox(height: 8),
                     ],
 
+                    // out of stock products last
                     if (outOfStockProducts.isNotEmpty) ...[
                       _sectionHeader(
                         'OUT OF STOCK (${outOfStockProducts.length})',
@@ -489,7 +506,7 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
             ),
           ),
 
-          // Bottom bar
+          // bottom bar showing total and the Confirm button that
           Container(
             color: cs.surface,
             child: Padding(
@@ -520,6 +537,7 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
                     ),
                     const SizedBox(width: 12),
                     ElevatedButton(
+                      // disabled until at least one product is selected
                       onPressed: purchaseState.items.isEmpty
                           ? null
                           : () => Navigator.push(
@@ -559,6 +577,7 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
     );
   }
 
+  // small colored label used (Selected/Available/Out of stock)
   Widget _sectionHeader(String label, Color color) {
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 8),
@@ -572,6 +591,8 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
     );
   }
 
+  // product list selection GUI
+  // tapping the row (when not out of stock) opens the quantity modal.
   Widget _buildProductTile(
     Product product, {
     required bool isSelected,
@@ -651,6 +672,8 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
                     ),
                     const SizedBox(height: 2),
 
+                    // when not selected yet, show stock and price.
+                    // once selected, swap to showing qty and subtotal instead.
                     if (!isSelected) ...[
                       Text(
                         isOutOfStock
@@ -708,6 +731,7 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(4),
                         ),
+                        // can only uncheck here for item removal on cart
                         onChanged: isSelected
                             ? (_) {
                                 purchaseNotifier.removeProduct(product.id!);
@@ -726,6 +750,7 @@ class PurchaseSectionState extends ConsumerState<PurchaseSection> {
   }
 }
 
+// buttons UI for quantity +/-
 class _QtyButton extends StatelessWidget {
   const _QtyButton({
     required this.icon,
@@ -746,6 +771,7 @@ class _QtyButton extends StatelessWidget {
         height: 30,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
+          // dimmed out when disabled (e.g. minus button at qty 1)
           color: enabled
               ? AppTheme.brandBlue.withOpacity(0.12)
               : AppTheme.borderBlue.withOpacity(0.2),
